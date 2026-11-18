@@ -1,78 +1,116 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#123b35"><title>مساعد التقارير والأعطال</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102f2b">
+<meta name="description" content="تسجيل الأعطال صوتياً أو كتابياً وتجميعها في تقرير واحد.">
+<title>مساعد التقارير والأعطال</title>
 <style>
-:root{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:#172b27;background:#f3f6f5}*{box-sizing:border-box}body{margin:0}header{background:#123b35;color:white;padding:26px 18px 30px;border-radius:0 0 24px 24px}header h1{font-size:24px;margin:0 0 8px}header p{margin:0;color:#d5e7e1;font-size:14px}.wrap{max-width:760px;margin:18px auto;padding:0 14px}.panel,.fault{background:white;border:1px solid #e0e9e5;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 14px #153b3010}.panel h2{font-size:18px;margin:0 0 12px}textarea{width:100%;min-height:135px;border:1px solid #cbd8d3;border-radius:12px;padding:13px;font:inherit;resize:vertical;line-height:1.8}button{border:0;border-radius:11px;padding:12px 15px;font:inherit;font-weight:650;cursor:pointer}.primary{background:#176b58;color:#fff}.secondary{background:#e8f1ed;color:#174c40}.danger{background:#fff0ef;color:#a52d26}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mic{display:flex;align-items:center;gap:8px}.hint,.small{font-size:13px;color:#64766f;line-height:1.7}.fault h3{margin:0 0 8px;font-size:15px;color:#176b58}.fault p{white-space:pre-wrap;line-height:1.8;margin:0}.fault .actions{justify-content:flex-start}.topline{display:flex;align-items:center;justify-content:space-between;gap:8px}.empty{text-align:center;padding:22px;color:#72817b}.status{margin-top:9px;font-size:13px;color:#176b58;min-height:20px}.footer{text-align:center;color:#718078;font-size:12px;padding:10px 0 28px}
-</style></head>
+:root{color-scheme:light;--ink:#18332e;--muted:#71827c;--green:#176b58;--green2:#e6f2ed;--line:#e1eae6;--paper:#fff;--bg:#f3f7f5;--red:#a63b35;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6}
+header{background:linear-gradient(135deg,#102f2b,#1b6655);color:#fff;padding:25px 18px 30px;border-radius:0 0 26px 26px}
+.head{max-width:780px;margin:auto}.eyebrow{font-size:12px;color:#c8e2d8;margin:0 0 5px}h1{font-size:24px;line-height:1.3;margin:0 0 7px}header p{font-size:14px;color:#d9eae4;margin:0}
+.wrap{max-width:780px;margin:18px auto;padding:0 14px 26px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}.stat,.panel,.fault{background:var(--paper);border:1px solid var(--line);border-radius:17px;box-shadow:0 5px 18px #173c3010}
+.stat{padding:13px 15px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{font-size:22px}
+.panel{padding:17px;margin-bottom:14px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}h2{font-size:17px;margin:0}.step{font-size:11px;color:var(--green);background:var(--green2);padding:4px 9px;border-radius:30px}
+textarea{display:block;width:100%;min-height:142px;border:1px solid #cbd9d3;border-radius:13px;padding:13px;background:#fcfefd;color:var(--ink);font:inherit;line-height:1.9;resize:vertical;outline:none}
+textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #176b5818}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{border:0;border-radius:12px;padding:11px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .12s,opacity .12s}
+button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--green);color:#fff}.secondary{background:var(--green2);color:#185443}.quiet{background:#f0f3f2;color:#50615b}.danger{background:#fff0ef;color:var(--red)}
+.mic{min-width:145px}.mic.recording{background:#a63b35}.status{min-height:22px;margin-top:9px;color:var(--green);font-size:13px}.hint{font-size:12px;color:var(--muted);margin:7px 0 0;line-height:1.8}
+.fault{padding:14px;margin-top:10px;box-shadow:none}.fault-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.fault h3{margin:0;color:var(--green);font-size:14px}.fault p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9}.fault .actions{margin-top:10px}
+.empty{text-align:center;padding:24px 12px;color:var(--muted);font-size:14px}.empty-icon{font-size:27px;display:block;margin-bottom:6px}
+.divider{height:1px;background:var(--line);margin:15px 0}.share-actions button{flex:1}.footer{text-align:center;color:#87958f;font-size:11px;padding:6px 0 15px}
+@media(min-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.actions button{flex:0 0 auto}}
+</style>
+</head>
 <body>
-<header><h1>مساعد التقارير والأعطال</h1><p>سجّل الأعطال صوتياً، راجع النص، واجمعها في تقرير واحد.</p></header>
+<header><div class="head"><p class="eyebrow">تسجيل • مراجعة • مشاركة</p><h1>مساعد التقارير والأعطال</h1><p>سجّل كل عطل بشكل مستقل، ثم اجمع الأعطال في تقرير واحد جاهز للمشاركة.</p></div></header>
 <main class="wrap">
-<section class="panel">
-<h2 id="editorTitle">تسجيل عطل جديد</h2>
-<textarea id="faultText" placeholder="اضغط على الميكروفون وتحدث، أو اكتب وصف العطل هنا..."></textarea>
-<div class="actions">
-<button class="primary mic" id="micBtn" type="button">🎙️ ابدأ التسجيل</button>
-<button class="secondary" id="saveBtn" type="button">＋ إضافة العطل</button>
-<button class="secondary" id="clearBtn" type="button">مسح النص</button>
+<div class="stats" aria-label="ملخص التقارير">
+ <div class="stat"><span>الأعطال المسجلة</span><strong id="count">0</strong></div>
+ <div class="stat"><span>حالة الحفظ</span><strong style="font-size:15px;color:var(--green)">حفظ محلي تلقائي</strong></div>
 </div>
-<div class="status" id="status" aria-live="polite"></div>
-<p class="hint">ملاحظة: التعرف الصوتي يعتمد على دعم المتصفح وإذن الميكروفون. راجع النص قبل إضافته، خصوصاً أسماء المعدات والمصطلحات الفنية.</p>
+<section class="panel">
+ <div class="section-head"><h2 id="editorTitle">إضافة عطل جديد</h2><span class="step" id="editorMode">إدخال جديد</span></div>
+ <textarea id="faultText" placeholder="اكتب وصف العطل هنا، أو استخدم زر التسجيل الصوتي..." aria-label="وصف العطل"></textarea>
+ <div class="actions">
+  <button class="primary mic" id="micBtn" type="button">🎙️ ابدأ التسجيل</button>
+  <button class="secondary" id="saveBtn" type="button">＋ إضافة العطل</button>
+  <button class="quiet" id="clearBtn" type="button">مسح النص</button>
+  <button class="quiet" id="cancelEditBtn" type="button" hidden>إلغاء التعديل</button>
+ </div>
+ <div class="status" id="status" role="status" aria-live="polite"></div>
+ <p class="hint">التسجيل الصوتي يتطلب متصفحاً يدعم التعرف على الكلام وإذن الميكروفون. راجع النص قبل الحفظ، خصوصاً أسماء المعدات والمصطلحات الفنية.</p>
 </section>
 <section class="panel">
-<div class="topline"><h2>الأعطال المسجلة</h2><strong id="count">0</strong></div>
-<div id="faultList"><div class="empty">لم تتم إضافة أعطال بعد.</div></div>
-<div class="actions">
-<button class="primary" id="copyBtn" type="button">نسخ التقرير بالكامل</button>
-<button class="secondary" id="waBtn" type="button">مشاركة عبر واتساب</button>
-</div>
-<div class="status" id="shareStatus" aria-live="polite"></div>
+ <div class="section-head"><h2>الأعطال المسجلة</h2><span class="step" id="listLabel">قائمة التقرير</span></div>
+ <div id="faultList"><div class="empty"><span class="empty-icon">🧾</span>لم تتم إضافة أعطال بعد.</div></div>
+ <div class="divider"></div>
+ <div class="actions share-actions">
+  <button class="primary" id="copyBtn" type="button">نسخ التقرير</button>
+  <button class="secondary" id="shareBtn" type="button">مشاركة</button>
+  <button class="quiet" id="downloadBtn" type="button">تنزيل TXT</button>
+ </div>
+ <div class="status" id="shareStatus" role="status" aria-live="polite"></div>
 </section>
-<div class="footer">يتم حفظ الأعطال محلياً على هذا الجهاز والمتصفح.</div>
+<p class="footer">بياناتك محفوظة داخل هذا المتصفح على جهازك. احرص على نسخ التقرير أو تنزيله للاحتفاظ بنسخة خارجية.</p>
 </main>
 <script>
-(function(){
- const $=id=>document.getElementById(id), KEY='voiceFaultReports.v1';
- let faults=[]; let editingId=null; let recognition=null; let listening=false;
- try{faults=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(faults))faults=[]}catch(e){faults=[]}
- function persist(){try{localStorage.setItem(KEY,JSON.stringify(faults))}catch(e){$('status').textContent='تعذر الحفظ المحلي في هذا المتصفح.'}}
- function report(){return faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text).join('\n\n')}
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id), KEY='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
+ let faults=[],editingId=null,recognition=null,listening=false;
+ try{const data=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(data))faults=data.filter(x=>x&&typeof x.text==='string')}catch(_){}
+ $('faultText').value=localStorage.getItem(DRAFT)||'';
+ const setStatus=(id,msg)=>$(id).textContent=msg;
+ function persist(){try{localStorage.setItem(KEY,JSON.stringify(faults));localStorage.setItem(DRAFT,$('faultText').value)}catch(_){setStatus('status','تعذر الحفظ المحلي؛ انسخ التقرير للاحتفاظ به.')}}
+ function makeReport(){return 'تقرير الأعطال\n====================\n\n'+faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text.trim()).join('\n\n')}
+ function resetEditor(){editingId=null;$('faultText').value='';$('editorTitle').textContent='إضافة عطل جديد';$('editorMode').textContent='إدخال جديد';$('saveBtn').textContent='＋ إضافة العطل';$('cancelEditBtn').hidden=true;persist()}
  function render(){
-  $('count').textContent=faults.length+' أعطال';
-  const list=$('faultList');list.innerHTML='';
-  if(!faults.length){list.innerHTML='<div class="empty">لم تتم إضافة أعطال بعد.</div>';return}
+  $('count').textContent=String(faults.length);$('listLabel').textContent=faults.length+' أعطال';
+  const list=$('faultList');list.replaceChildren();
+  if(!faults.length){const empty=document.createElement('div');empty.className='empty';empty.innerHTML='<span class="empty-icon">🧾</span>لم تتم إضافة أعطال بعد.';list.append(empty);return}
   faults.forEach((f,i)=>{
    const card=document.createElement('article');card.className='fault';
-   const h=document.createElement('h3');h.textContent='العطل رقم '+(i+1);
-   const p=document.createElement('p');p.textContent=f.text;
+   const top=document.createElement('div');top.className='fault-top';
+   const title=document.createElement('h3');title.textContent='العطل رقم '+(i+1);
+   const number=document.createElement('span');number.className='step';number.textContent='مسجل';
+   top.append(title,number);
+   const body=document.createElement('p');body.textContent=f.text;
    const actions=document.createElement('div');actions.className='actions';
-   const edit=document.createElement('button');edit.className='secondary';edit.textContent='تعديل';edit.onclick=()=>{editingId=f.id;$('faultText').value=f.text;$('editorTitle').textContent='تعديل العطل رقم '+(i+1);$('saveBtn').textContent='حفظ التعديل';window.scrollTo({top:0,behavior:'smooth'});};
-   const del=document.createElement('button');del.className='danger';del.textContent='حذف';del.onclick=()=>{if(confirm('هل تريد حذف هذا العطل؟')){faults=faults.filter(x=>x.id!==f.id);persist();render();}};
-   actions.append(edit,del);card.append(h,p,actions);list.append(card);
+   const edit=document.createElement('button');edit.className='secondary';edit.textContent='تعديل';edit.onclick=()=>{editingId=f.id;$('faultText').value=f.text;$('editorTitle').textContent='تعديل العطل رقم '+(i+1);$('editorMode').textContent='وضع التعديل';$('saveBtn').textContent='حفظ التعديل';$('cancelEditBtn').hidden=false;window.scrollTo({top:0,behavior:'smooth'});$('faultText').focus();};
+   const del=document.createElement('button');del.className='danger';del.textContent='حذف';del.onclick=()=>{if(confirm('هل تريد حذف العطل رقم '+(i+1)+'؟')){faults=faults.filter(x=>x.id!==f.id);if(editingId===f.id)resetEditor();persist();render();setStatus('status','تم حذف العطل.')}};actions.append(edit,del);card.append(top,body,actions);list.append(card);
   });
  }
  function save(){
-  const text=$('faultText').value.trim();if(!text){$('status').textContent='اكتب وصف العطل أو سجّله صوتياً أولاً.';return}
-  if(editingId){const f=faults.find(x=>x.id===editingId);if(f)f.text=text;editingId=null;$('editorTitle').textContent='تسجيل عطل جديد';$('saveBtn').textContent='＋ إضافة العطل';}
-  else faults.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),text});
-  $('faultText').value='';persist();render();$('status').textContent='تم حفظ العطل على هذا الجهاز.';
+  const value=$('faultText').value.trim();if(!value){setStatus('status','اكتب وصف العطل أو سجّله صوتياً أولاً.');return}
+  if(editingId){const found=faults.find(x=>x.id===editingId);if(found)found.text=value;resetEditor();setStatus('status','تم حفظ التعديل.')}
+  else{faults.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),text:value});$('faultText').value='';persist();setStatus('status','تمت إضافة العطل وحفظه.')}
+  render();
  }
  function setupSpeech(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){$('status').textContent='المتصفح لا يدعم التعرف الصوتي. جرّب Chrome على Android أو اكتب النص يدوياً.';return false}
+  if(!SR){setStatus('status','التسجيل الصوتي غير مدعوم في هذا المتصفح. جرّب Chrome أو اكتب العطل يدوياً.');return false}
   recognition=new SR();recognition.lang='ar-JO';recognition.continuous=true;recognition.interimResults=true;
-  recognition.onstart=()=>{listening=true;$('micBtn').textContent='⏹️ إيقاف التسجيل';$('status').textContent='جاري الاستماع... تحدث الآن.'};
-  recognition.onresult=e=>{let finalText='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finalText+=t}if(finalText){const area=$('faultText');area.value+=(area.value?' ':'')+finalText}};
-  recognition.onerror=e=>{$('status').textContent='تعذر التسجيل: '+(e.error==='not-allowed'?'يرجى السماح باستخدام الميكروفون.':e.error)};
-  recognition.onend=()=>{listening=false;$('micBtn').textContent='🎙️ ابدأ التسجيل'};
+  recognition.onstart=()=>{listening=true;$('micBtn').textContent='⏹ إيقاف التسجيل';$('micBtn').classList.add('recording');setStatus('status','جاري الاستماع... تحدث الآن.')};
+  recognition.onresult=e=>{let finalText='',preview='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finalText+=t;else preview+=t}if(finalText){const area=$('faultText');area.value+=(area.value.trim()?' ':'')+finalText;persist()}if(preview)setStatus('status','أسمع الآن: '+preview)};
+  recognition.onerror=e=>{const messages={'not-allowed':'يرجى السماح باستخدام الميكروفون من إعدادات المتصفح.','no-speech':'لم يتم التقاط كلام؛ حاول مرة أخرى.','network':'تعذر الاتصال بخدمة التعرف الصوتي.','audio-capture':'لم يتم العثور على ميكروفون.'};setStatus('status',messages[e.error]||'حدث خطأ أثناء التسجيل: '+e.error)};
+  recognition.onend=()=>{listening=false;$('micBtn').textContent='🎙️ ابدأ التسجيل';$('micBtn').classList.remove('recording');};
   return true;
  }
- $('micBtn').onclick=()=>{if(!recognition&&!setupSpeech())return;try{if(listening)recognition.stop();else recognition.start()}catch(e){$('status').textContent='تعذر بدء التسجيل. حاول مرة أخرى.'}};
+ $('micBtn').onclick=()=>{if(!recognition&&!setupSpeech())return;try{if(listening)recognition.stop();else recognition.start()}catch(_){setStatus('status','التسجيل يعمل أو تعذر تشغيله. انتظر لحظة ثم حاول مجدداً.')}};
  $('saveBtn').onclick=save;
- $('clearBtn').onclick=()=>{$('faultText').value='';$('status').textContent='تم مسح النص من المحرر.'};
- $('copyBtn').onclick=async()=>{if(!faults.length){$('shareStatus').textContent='لا يوجد تقرير لنسخه.';return}try{await navigator.clipboard.writeText(report());$('shareStatus').textContent='تم نسخ التقرير بالكامل.'}catch(e){$('shareStatus').textContent='تعذر النسخ التلقائي. استخدم مشاركة واتساب.'}};
- $('waBtn').onclick=()=>{if(!faults.length){$('shareStatus').textContent='أضف عطلًا أولاً.';return}window.open('https://wa.me/?text='+encodeURIComponent(report()),'_blank','noopener');};
+ $('clearBtn').onclick=()=>{$('faultText').value='';persist();setStatus('status','تم مسح النص من المحرر فقط.');};
+ $('cancelEditBtn').onclick=()=>{resetEditor();setStatus('status','تم إلغاء التعديل.');};
+ $('faultText').addEventListener('input',()=>{try{localStorage.setItem(DRAFT,$('faultText').value)}catch(_){}});
+ $('copyBtn').onclick=async()=>{if(!faults.length){setStatus('shareStatus','لا يوجد تقرير لنسخه.');return}const text=makeReport();try{await navigator.clipboard.writeText(text);setStatus('shareStatus','تم نسخ التقرير بالكامل.')}catch(_){const temp=document.createElement('textarea');temp.value=text;document.body.append(temp);temp.select();const ok=document.execCommand('copy');temp.remove();setStatus('shareStatus',ok?'تم نسخ التقرير.':'تعذر النسخ؛ استخدم زر المشاركة أو التنزيل.')}};
+ $('shareBtn').onclick=async()=>{if(!faults.length){setStatus('shareStatus','أضف عطلًا أولاً.');return}const text=makeReport();try{if(navigator.share)await navigator.share({title:'تقرير الأعطال',text});else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setStatus('shareStatus','تم فتح خيارات المشاركة.')}catch(e){if(e.name!=='AbortError')setStatus('shareStatus','تعذرت المشاركة من هذا المتصفح. استخدم نسخ التقرير.')}};
+ $('downloadBtn').onclick=()=>{if(!faults.length){setStatus('shareStatus','أضف عطلًا أولاً.');return}const blob=new Blob(['\ufeff'+makeReport()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='تقرير-الأعطال.txt';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);setStatus('shareStatus','تم تجهيز ملف التقرير للتنزيل.')};
  render();
 })();
 </script>
