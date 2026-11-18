@@ -1,14 +1,14 @@
 {
-  "name": "مساعد التقارير والأعطال",
-  "short_name": "تقارير الأعطال",
-  "description": "تسجيل الأعطال صوتياً أو كتابياً وتجميعها في تقرير واحد",
+  "name": "مساعد مشرف الصيانة",
+  "short_name": "مشرف الصيانة",
+  "description": "إدارة الأعطال وأعمال الشفت والتسليم وطلبات قطع الغيار",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f7f5",
-  "theme_color": "#102f2b",
+  "theme_color": "#123c34",
   "icons": [
     {
       "src": "./icon.svg",
