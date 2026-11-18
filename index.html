@@ -95,7 +95,7 @@
 </section>
 <section id="settings" class="view hidden">
  <div class="panel"><div class="section-head"><h2>إعدادات المساعد</h2><span class="pill">إعدادات محلية</span></div>
-  <div class="notice">لأمان بيانات المصنع، لا تدخل مفتاح API هنا. الربط الصحيح يكون عبر خدمة خلفية تحفظ المفتاح في أسرار الخادم، وليس في المتصفح. يوجد مشروع Supabase منفصل حالياً لخدمة أخرى؛ لن نربط بيانات الصيانة به دون قرار منك.</div>
+  <div class="notice">تم ربط سجلات الصيانة بمشروع Supabase مستقل وآمن عبر تسجيل الدخول وسياسات صلاحيات قاعدة البيانات. لا تضع أي مفاتيح سرية هنا. خدمة الصياغة الذكية ستُفعّل لاحقاً عبر وظيفة خلفية تحفظ مفتاح مزود الذكاء الاصطناعي كسرّ على الخادم.</div>
   <div class="field"><label for="apiEndpoint">عنوان خدمة الصياغة الآمنة (بعد إعدادها)</label><input id="apiEndpoint" placeholder="https://your-project.supabase.co/functions/v1/maintenance-assistant"></div>
   <div class="actions"><button class="primary" id="saveSettings">حفظ العنوان</button><button class="secondary" id="testAI">اختبار الاتصال</button></div><div id="settingsStatus" class="status"></div>
   <div class="divider"></div><h2>البيانات والنسخ الاحتياطي</h2><p class="muted">تحفظ السجلات محلياً في هذا المتصفح. احفظ نسخة احتياطية دورياً، ولا تعتمد على جهاز واحد لحفظ سجلات المصنع.</p>
@@ -153,7 +153,7 @@ async function syncCloud(){
  }catch(e){cloudMsg('تعذرت المزامنة: '+e.message,'err')}
  finally{syncBusy=false;if(syncAgain){syncAgain=false;syncCloud()}}
 }
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
+async function deleteCloud(table,id){if(!cloudReady||!authSession)return;try{await rest(table+'?local_id=eq.'+encodeURIComponent(String(id)),'DELETE')}catch(e){cloudMsg('تعذر حذف السجل من السحابة: '+e.message,'err')}}\nconst save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
 function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
 async function signIn(mode){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg(mode==='signup'?'جارٍ إنشاء حساب المالك...':'جارٍ تسجيل الدخول...');let d;if(mode==='signup'){d=await authRequest('signup',{email,password});if(!d.access_token){cloudMsg('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلاً، أكّد بريدك ثم سجّل الدخول.','ok');return}}else d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
 $('loginBtn').onclick=()=>signIn('login');$('signupBtn').onclick=()=>signIn('signup');$('syncBtn').onclick=()=>syncCloud();
@@ -178,9 +178,9 @@ function render(){
  const recent=[...db.faults.map(x=>({t:'عطل • '+x.dept,b:x.text})),...db.hands.map(x=>({t:'تسليم • '+x.state,b:x.text}))].slice(-4).reverse();
  $('recentList').innerHTML=recent.length?recent.map(x=>card(x.t,'سجل محلي',x.b)).join(''):'<div class="empty">لا توجد أعمال مسجلة بعد.</div>';
  document.querySelectorAll('[data-copyfault]').forEach(b=>b.onclick=()=>copy(db.faults.find(x=>x.id===b.dataset.copyfault)?.text||''));
- document.querySelectorAll('[data-delfault]').forEach(b=>b.onclick=()=>{if(confirm('حذف هذه الملاحظة؟')){db.faults=db.faults.filter(x=>x.id!==b.dataset.delfault);save();render();}});
- document.querySelectorAll('[data-delhand]').forEach(b=>b.onclick=()=>{db.hands=db.hands.filter(x=>x.id!==b.dataset.delhand);save();render();});
- document.querySelectorAll('[data-delpart]').forEach(b=>b.onclick=()=>{db.parts=db.parts.filter(x=>x.id!==b.dataset.delpart);save();render();});
+ document.querySelectorAll('[data-delfault]').forEach(b=>b.onclick=()=>{if(confirm('حذف هذه الملاحظة؟')){db.faults=db.faults.filter(x=>x.id!==b.dataset.delfault);deleteCloud('maintenance_records',b.dataset.delfault);save();render();}});
+ document.querySelectorAll('[data-delhand]').forEach(b=>b.onclick=()=>{db.hands=db.hands.filter(x=>x.id!==b.dataset.delhand);deleteCloud('shift_handovers',b.dataset.delhand);save();render();});
+ document.querySelectorAll('[data-delpart]').forEach(b=>b.onclick=()=>{db.parts=db.parts.filter(x=>x.id!==b.dataset.delpart);deleteCloud('spare_parts_requests',b.dataset.delpart);save();render();});
  document.querySelectorAll('[data-handstate]').forEach(b=>b.onclick=()=>{const x=db.hands.find(y=>y.id===b.dataset.handstate);if(x){x.state=x.state==='مكتمل'?'مفتوح للمتابعة':'مكتمل';save();render();}});
 }
 async function copy(t){if(!t){return}try{await navigator.clipboard.writeText(t);alert('تم النسخ.')}catch(e){const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove();alert('تم النسخ.');}}
