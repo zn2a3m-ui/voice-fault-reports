@@ -73,7 +73,7 @@ button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowe
  $('faultText').value=localStorage.getItem(DRAFT)||'';
  const setStatus=(id,msg)=>$(id).textContent=msg;
  function persist(){try{localStorage.setItem(KEY,JSON.stringify(faults));localStorage.setItem(DRAFT,$('faultText').value)}catch(_){setStatus('status','تعذر الحفظ المحلي؛ انسخ التقرير للاحتفاظ به.')}}
- function makeReport(){return 'تقرير الأعطال\n====================\n\n'+faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text.trim()).join('\n\n')}
+ function makeReport(){const stamp=new Intl.DateTimeFormat('ar-JO',{dateStyle:'full',timeStyle:'short'}).format(new Date());return 'تقرير الأعطال\nالتاريخ: '+stamp+'\nعدد الأعطال: '+faults.length+'\n====================\n\n'+faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text.trim()).join('\n\n')}
  function resetEditor(){editingId=null;$('faultText').value='';$('editorTitle').textContent='إضافة عطل جديد';$('editorMode').textContent='إدخال جديد';$('saveBtn').textContent='＋ إضافة العطل';$('cancelEditBtn').hidden=true;persist()}
  function render(){
   $('count').textContent=String(faults.length);$('listLabel').textContent=faults.length+' أعطال';
