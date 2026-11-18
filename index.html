@@ -95,7 +95,7 @@
 const $=id=>document.getElementById(id), KEY='maintenanceSupervisor.v2', OLD='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
 const blank={faults:[],shifts:[],hands:[],parts:[],settings:{endpoint:''}};
 let db=blank;
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object')db={...blank,...saved,settings:{...blank.settings,...(saved.settings||{})}};else{const old=JSON.parse(localStorage.getItem(OLD)||'[]');if(Array.isArray(old))db.faults=old.filter(x=>x&&typeof x.text==='string').map(x=>({id:x.id||uid(),text:x.text,dept:'عام',state:'قديم',createdAt:new Date().toISOString()}));}}catch(e){}
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object')db={...blank,...saved,settings:{...blank.settings,...(saved.settings||{})}};else{const old=JSON.parse(localStorage.getItem(OLD)||'[]');if(Array.isArray(old))db.faults=old.filter(x=>x&&typeof x.text==='string').map(x=>({id:x.id||('legacy-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)),text:x.text,dept:'عام',state:'قديم',createdAt:new Date().toISOString()}));}}catch(e){}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status=(id,msg)=>$(id).textContent=msg;
