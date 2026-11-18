@@ -19,6 +19,22 @@
 <body>
 <header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الميكانيك والكهرباء والمواسير خلال الشفت.</p></div></header>
 <main class="wrap">
+<style>
+.auth-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
+.auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.auth-panel input{width:100%;border:1px solid #cbd9d3;border-radius:11px;padding:11px;background:#fcfefd}
+.cloud-state{font-size:12px;color:var(--muted);margin-top:7px}.cloud-state.ok{color:var(--green)}.cloud-state.err{color:var(--red)}
+</style>
+<section class="auth-panel" id="authPanel">
+ <div class="section-head"><h2>الدخول الآمن والمزامنة السحابية</h2><span class="pill">حسابك الخاص</span></div>
+ <div id="authForm">
+  <div class="auth-grid"><input id="authEmail" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
+  <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button><button class="secondary" id="signupBtn">إنشاء حساب المالك</button></div>
+  <p class="hint">أنشئ حسابك الشخصي مرة واحدة. إذا طلب النظام تأكيد البريد، افتح رسالة التأكيد ثم ارجع لتسجيل الدخول.</p>
+ </div>
+ <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div>
+ <div id="cloudStatus" class="cloud-state" role="status">البيانات محفوظة محلياً إلى أن تسجل الدخول.</div>
+</section>
+
 <div class="stats">
  <div class="stat"><span>الأعطال المسجلة</span><strong id="faultCount">0</strong></div>
  <div class="stat"><span>أعمال الشفت</span><strong id="workCount">0</strong></div>
@@ -37,7 +53,7 @@
   <button class="tile" data-go="faults"><span class="emoji">⚙️</span><b>متابعة الأعطال</b><span>حالات الإصلاح والمتابعة</span></button>
   <button class="tile" data-go="settings"><span class="emoji">🤖</span><b>إعداد المساعد الذكي</b><span>ربط خدمة الصياغة الآمنة</span></button>
  </div></div>
- <div class="panel"><div class="section-head"><h2>آخر المستجدات</h2><span class="muted">محفوظة على هذا الجهاز</span></div><div id="recentList" class="cards"><div class="empty">لا توجد أعمال مسجلة بعد.</div></div></div>
+ <div class="panel"><div class="section-head"><h2>آخر المستجدات</h2><span class="muted">مزامنة سحابية عند تسجيل الدخول</span></div><div id="recentList" class="cards"><div class="empty">لا توجد أعمال مسجلة بعد.</div></div></div>
 </section>
 <section id="faults" class="view hidden">
  <div class="panel"><div class="section-head"><h2 id="faultTitle">تسجيل عطل أو ملاحظة فنية</h2><span class="pill">إدخال صوتي أو كتابي</span></div>
@@ -87,19 +103,65 @@
   <div class="divider"></div><label class="checkline"><input type="checkbox" id="confirmClear"> أفهم أن حذف البيانات لا يمكن التراجع عنه دون نسخة احتياطية.</label><button class="danger" id="clearAll">حذف جميع بيانات هذا الجهاز</button>
  </div>
 </section>
-<p class="footer">مساعد مشرف الصيانة • النسخة الأولية المطوّرة • البيانات محلية على هذا الجهاز</p>
+<p class="footer">مساعد مشرف الصيانة • النسخة الأولية المطوّرة • مزامنة سحابية مع نسخة محلية احتياطية</p>
 </main>
 <script>
 (()=>{
 'use strict';
-const $=id=>document.getElementById(id), KEY='maintenanceSupervisor.v2', OLD='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
+const SUPABASE_URL='https://yyhxlbqhjlptiyigsshs.supabase.co', SUPABASE_KEY='sb_publishable_E9Ckd9dc7H9zJaLTdSBeig_QersQFX_', AUTH_KEY='maintenanceSupervisor.auth.v1';\nconst $=id=>document.getElementById(id), KEY='maintenanceSupervisor.v2', OLD='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
 const blank={faults:[],shifts:[],hands:[],parts:[],settings:{endpoint:''}};
 let db=blank;
 try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object')db={...blank,...saved,settings:{...blank.settings,...(saved.settings||{})}};else{const old=JSON.parse(localStorage.getItem(OLD)||'[]');if(Array.isArray(old))db.faults=old.filter(x=>x&&typeof x.text==='string').map(x=>({id:x.id||('legacy-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)),text:x.text,dept:'عام',state:'قديم',createdAt:new Date().toISOString()}));}}catch(e){}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status=(id,msg)=>$(id).textContent=msg;
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
+let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false;
+const cloudMsg=(msg,kind='')=>{const el=$('cloudStatus');el.textContent=msg;el.className='cloud-state '+kind};
+const authHeaders=(token)=>({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'});
+async function authRequest(path,body){const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.msg||d.message||d.error_description||'تعذر إتمام طلب الدخول');return d}
+async function refreshSession(){if(!authSession?.refresh_token)return false;try{const d=await authRequest('token?grant_type=refresh_token',{refresh_token:authSession.refresh_token});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));return true}catch(e){authSession=null;localStorage.removeItem(AUTH_KEY);return false}}
+async function rest(table,method,rows){if(!authSession?.access_token)throw new Error('سجّل الدخول أولاً');let r=await fetch(SUPABASE_URL+'/rest/v1/'+table,{method,headers:{...authHeaders(authSession.access_token),'Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':'return=representation','Content-Type':'application/json'},body:rows?JSON.stringify(rows):undefined});if(r.status===401&&await refreshSession()){r=await fetch(SUPABASE_URL+'/rest/v1/'+table,{method,headers:{...authHeaders(authSession.access_token),'Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':'return=representation','Content-Type':'application/json'},body:rows?JSON.stringify(rows):undefined})}const t=await r.text();if(!r.ok)throw new Error('مزامنة '+table+': '+t.slice(0,220));return t?JSON.parse(t):[]}
+const deptToDb=v=>({'ميكانيك':'mechanical','كهرباء':'electrical','مواسير وتمديدات':'plumbing','عام':'general'}[v]||'general');
+const deptFromDb=v=>({mechanical:'ميكانيك',electrical:'كهرباء',plumbing:'مواسير وتمديدات',general:'عام'}[v]||'عام');
+const stateToDb=v=>({'جديد':'new','قيد الفحص':'inspection','قيد الإصلاح':'in_progress','تم الإصلاح':'repaired','يحتاج متابعة':'follow_up','بانتظار قطع غيار':'waiting_parts'}[v]||'new');
+const stateFromDb=v=>({new:'جديد',inspection:'قيد الفحص',in_progress:'قيد الإصلاح',repaired:'تم الإصلاح',follow_up:'يحتاج متابعة',waiting_parts:'بانتظار قطع غيار'}[v]||v||'جديد');
+const localDate=v=>{const d=v?new Date(v):new Date();return Number.isNaN(d.getTime())?new Date().toISOString().slice(0,10):d.toISOString().slice(0,10)};
+async function syncCloud(){
+ if(!cloudReady||!authSession?.user?.id)return;if(syncBusy){syncAgain=true;return}syncBusy=true;
+ try{
+ const uid=authSession.user.id;
+ const faults=db.faults.map(f=>({user_id:uid,local_id:String(f.id),record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:new Date().toISOString()}));
+ const shifts=db.shifts.map(x=>({user_id:uid,local_id:String(x.id),shift_date:localDate(x.savedAt),shift_name:x.shift||'المسائي',completed_work:x.done||'',pending_work:x.pending||'',notes:x.notes||''}));
+ const hands=db.hands.map(x=>({user_id:uid,local_id:String(x.id),handover_date:localDate(x.createdAt),from_shift:'المسائي',to_shift:'الصباحي',handover_notes:(x.dept||'عام')+' • '+(x.state||'مفتوح للمتابعة')+'\n'+(x.text||'')}));
+ const parts=db.parts.map(x=>({user_id:uid,local_id:String(x.id),item_name:x.name||'قطعة غير محددة',quantity:Math.max(0.001,Number.parseFloat(String(x.qty).replace(',','.'))||1),unit:'قطعة',priority:x.priority==='عاجلة'?'urgent':x.priority==='مهمة'?'high':'normal',reason:(x.dept||'عام')+' • '+(x.reason||''),status:'requested'}));
+ if(faults.length)await rest('maintenance_records?on_conflict=user_id,local_id','POST',faults);
+ if(shifts.length)await rest('shift_reports?on_conflict=user_id,local_id','POST',shifts);
+ if(hands.length)await rest('shift_handovers?on_conflict=user_id,local_id','POST',hands);
+ if(parts.length)await rest('spare_parts_requests?on_conflict=user_id,local_id','POST',parts);
+ const [rf,rs,rh,rp]=await Promise.all([
+ rest('maintenance_records?select=*&order=created_at.desc','GET'),
+ rest('shift_reports?select=*&order=shift_date.desc','GET'),
+ rest('shift_handovers?select=*&order=handover_date.desc','GET'),
+ rest('spare_parts_requests?select=*&order=created_at.desc','GET')
+ ]);
+ const merge=(local,remote,convert)=>{const ids=new Set(local.map(x=>String(x.id)));remote.forEach(row=>{if(row.local_id&&!ids.has(String(row.local_id))){local.push(convert(row));ids.add(String(row.local_id))}})};
+ merge(db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),state:stateFromDb(r.status),createdAt:r.created_at}));
+ merge(db.shifts,rs,r=>({id:r.local_id,shift:r.shift_name,done:r.completed_work,pending:r.pending_work,notes:r.notes,savedAt:r.shift_date}));
+ merge(db.hands,rh,r=>({id:r.local_id,text:r.handover_notes,dept:'عام',state:'مفتوح للمتابعة',createdAt:r.handover_date}));
+ merge(db.parts,rp,r=>({id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:'عام',priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:r.reason,status:r.status}));
+ localStorage.setItem(KEY,JSON.stringify(db));render();cloudMsg('تمت المزامنة بنجاح • سجلاتك محفوظة على السحابة وهذا الجهاز.','ok');
+ }catch(e){cloudMsg('تعذرت المزامنة: '+e.message,'err')}
+ finally{syncBusy=false;if(syncAgain){syncAgain=false;syncCloud()}}
+}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
+function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
+async function signIn(mode){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg(mode==='signup'?'جارٍ إنشاء حساب المالك...':'جارٍ تسجيل الدخول...');let d;if(mode==='signup'){d=await authRequest('signup',{email,password});if(!d.access_token){cloudMsg('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلاً، أكّد بريدك ثم سجّل الدخول.','ok');return}}else d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
+$('loginBtn').onclick=()=>signIn('login');$('signupBtn').onclick=()=>signIn('signup');$('syncBtn').onclick=()=>syncCloud();
+$('logoutBtn').onclick=async()=>{try{if(authSession?.access_token)await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:authHeaders(authSession.access_token)})}catch(e){}authSession=null;cloudReady=false;localStorage.removeItem(AUTH_KEY);showAuth();cloudMsg('تم تسجيل الخروج. بيانات هذا الجهاز بقيت محفوظة محلياً.')}
+try{authSession=JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch(e){authSession=null}
+showAuth();
+if(authSession?.access_token){cloudReady=true;refreshSession().then(ok=>{if(ok){showAuth();syncCloud()}else{cloudReady=false;showAuth();cloudMsg('انتهت الجلسة. سجّل الدخول مجدداً.')}})}
+
 const stamp=()=>new Intl.DateTimeFormat('ar-JO',{dateStyle:'short',timeStyle:'short'}).format(new Date());
 function go(tab){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==tab));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));
