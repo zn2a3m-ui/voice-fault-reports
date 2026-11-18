@@ -117,6 +117,10 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status=(id,msg)=>$(id).textContent=msg;
 let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false;
+const TOMBSTONE_KEY='maintenanceSupervisor.deleted.v1';
+let tombstones=[];try{tombstones=JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]');if(!Array.isArray(tombstones))tombstones=[]}catch(e){tombstones=[]}
+const tombstoneKey=(table,id)=>table+':'+String(id);
+function markDeleted(table,id){const k=tombstoneKey(table,id);if(!tombstones.includes(k))tombstones.push(k);localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(tombstones));}
 const cloudMsg=(msg,kind='')=>{const el=$('cloudStatus');el.textContent=msg;el.className='cloud-state '+kind};
 const authHeaders=(token)=>({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'});
 async function authRequest(path,body){const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.msg||d.message||d.error_description||'تعذر إتمام طلب الدخول');return d}
@@ -131,10 +135,15 @@ async function syncCloud(){
  if(!cloudReady||!authSession?.user?.id)return;if(syncBusy){syncAgain=true;return}syncBusy=true;
  try{
  const uid=authSession.user.id;
- const faults=db.faults.map(f=>({user_id:uid,local_id:String(f.id),record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:new Date().toISOString()}));
- const shifts=db.shifts.map(x=>({user_id:uid,local_id:String(x.id),shift_date:localDate(x.savedAt),shift_name:x.shift||'المسائي',completed_work:x.done||'',pending_work:x.pending||'',notes:x.notes||''}));
- const hands=db.hands.map(x=>({user_id:uid,local_id:String(x.id),handover_date:localDate(x.createdAt),from_shift:'المسائي',to_shift:'الصباحي',handover_notes:(x.dept||'عام')+' • '+(x.state||'مفتوح للمتابعة')+'\n'+(x.text||'')}));
- const parts=db.parts.map(x=>({user_id:uid,local_id:String(x.id),item_name:x.name||'قطعة غير محددة',quantity:Math.max(0.001,Number.parseFloat(String(x.qty).replace(',','.'))||1),unit:'قطعة',priority:x.priority==='عاجلة'?'urgent':x.priority==='مهمة'?'high':'normal',reason:(x.dept||'عام')+' • '+(x.reason||''),status:'requested'}));
+ const tables=['maintenance_records','shift_reports','shift_handovers','spare_parts_requests'];
+ const remoteBefore=await Promise.all(tables.map(t=>rest(t+'?select=local_id,deleted_at','GET')));
+ remoteBefore.forEach((rows,i)=>rows.filter(r=>r.deleted_at&&r.local_id).forEach(r=>{const k=tombstoneKey(tables[i],r.local_id);if(!tombstones.includes(k))tombstones.push(k)}));
+ localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(tombstones));
+ for(let i=0;i<tables.length;i++){const ids=tombstones.filter(k=>k.startsWith(tables[i]+':')).map(k=>k.slice(tables[i].length+1));for(const id of ids){await rest(tables[i]+'?local_id=eq.'+encodeURIComponent(id),'PATCH',[{deleted_at:new Date().toISOString()}])}}
+ const faults=db.faults.filter(f=>!tombstones.includes(tombstoneKey('maintenance_records',f.id))).map(f=>({user_id:uid,local_id:String(f.id),deleted_at:null,record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:new Date().toISOString()}));
+ const shifts=db.shifts.filter(x=>!tombstones.includes(tombstoneKey('shift_reports',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),shift_date:localDate(x.savedAt),shift_name:x.shift||'المسائي',completed_work:x.done||'',pending_work:x.pending||'',notes:x.notes||''}));
+ const hands=db.hands.filter(x=>!tombstones.includes(tombstoneKey('shift_handovers',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),handover_date:localDate(x.createdAt),from_shift:'المسائي',to_shift:'الصباحي',handover_notes:(x.dept||'عام')+' • '+(x.state||'مفتوح للمتابعة')+'\n'+(x.text||'')}));
+ const parts=db.parts.filter(x=>!tombstones.includes(tombstoneKey('spare_parts_requests',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,item_name:x.name||'قطعة غير محددة',quantity:Math.max(0.001,Number.parseFloat(String(x.qty).replace(',','.'))||1),unit:'قطعة',priority:x.priority==='عاجلة'?'urgent':x.priority==='مهمة'?'high':'normal',reason:(x.dept||'عام')+' • '+(x.reason||''),status:'requested'}));
  if(faults.length)await rest('maintenance_records?on_conflict=user_id,local_id','POST',faults);
  if(shifts.length)await rest('shift_reports?on_conflict=user_id,local_id','POST',shifts);
  if(hands.length)await rest('shift_handovers?on_conflict=user_id,local_id','POST',hands);
@@ -145,16 +154,16 @@ async function syncCloud(){
  rest('shift_handovers?select=*&order=handover_date.desc','GET'),
  rest('spare_parts_requests?select=*&order=created_at.desc','GET')
  ]);
- const merge=(local,remote,convert)=>{const ids=new Set(local.map(x=>String(x.id)));remote.forEach(row=>{if(row.local_id&&!ids.has(String(row.local_id))){local.push(convert(row));ids.add(String(row.local_id))}})};
- merge(db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),state:stateFromDb(r.status),createdAt:r.created_at}));
- merge(db.shifts,rs,r=>({id:r.local_id,shift:r.shift_name,done:r.completed_work,pending:r.pending_work,notes:r.notes,savedAt:r.shift_date}));
- merge(db.hands,rh,r=>({id:r.local_id,text:r.handover_notes,dept:'عام',state:'مفتوح للمتابعة',createdAt:r.handover_date}));
- merge(db.parts,rp,r=>({id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:'عام',priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:r.reason,status:r.status}));
+ const merge=(table,local,remote,convert)=>{const ids=new Set(local.map(x=>String(x.id)));remote.forEach(row=>{if(row.deleted_at&&row.local_id){markDeleted(table,row.local_id);return}if(row.local_id&&!ids.has(String(row.local_id))&&!tombstones.includes(tombstoneKey(table,row.local_id))){local.push(convert(row));ids.add(String(row.local_id))}})};
+ merge('maintenance_records',db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),state:stateFromDb(r.status),createdAt:r.created_at}));
+ merge('shift_reports',db.shifts,rs,r=>({id:r.local_id,shift:r.shift_name,done:r.completed_work,pending:r.pending_work,notes:r.notes,savedAt:r.shift_date}));
+ merge('shift_handovers',db.hands,rh,r=>({id:r.local_id,text:r.handover_notes,dept:'عام',state:'مفتوح للمتابعة',createdAt:r.handover_date}));
+ merge('spare_parts_requests',db.parts,rp,r=>({id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:'عام',priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:r.reason,status:r.status}));
  localStorage.setItem(KEY,JSON.stringify(db));render();cloudMsg('تمت المزامنة بنجاح • سجلاتك محفوظة على السحابة وهذا الجهاز.','ok');
  }catch(e){cloudMsg('تعذرت المزامنة: '+e.message,'err')}
  finally{syncBusy=false;if(syncAgain){syncAgain=false;syncCloud()}}
 }
-async function deleteCloud(table,id){if(!cloudReady||!authSession)return;try{await rest(table+'?local_id=eq.'+encodeURIComponent(String(id)),'DELETE')}catch(e){cloudMsg('تعذر حذف السجل من السحابة: '+e.message,'err')}}
+function deleteCloud(table,id){markDeleted(table,id);if(cloudReady)syncCloud()}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
 function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
 async function signIn(mode){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg(mode==='signup'?'جارٍ إنشاء حساب المالك...':'جارٍ تسجيل الدخول...');let d;if(mode==='signup'){d=await authRequest('signup',{email,password});if(!d.access_token){cloudMsg('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلاً، أكّد بريدك ثم سجّل الدخول.','ok');return}}else d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
@@ -218,7 +227,7 @@ $('testAI').onclick=async()=>{const ep=$('apiEndpoint').value.trim();if(!ep){sta
 function download(name,text){if(!text){alert('لا توجد بيانات للتنزيل.');return}const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url)}
 $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='نسخة-مساعد-الصيانة.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);status('backupStatus','تم تجهيز النسخة الاحتياطية.')};
 $('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.faults)||!Array.isArray(d.shifts)||!Array.isArray(d.hands)||!Array.isArray(d.parts))throw new Error();if(!confirm('سيتم استبدال البيانات الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;db={...blank,...d,settings:{...blank.settings,...(d.settings||{})}};save();render();$('apiEndpoint').value=db.settings.endpoint||'';status('backupStatus','تم استيراد النسخة الاحتياطية.')}catch(e){status('backupStatus','الملف غير صالح أو لا يطابق تنسيق النسخة.')}e.target.value=''};
-$('clearAll').onclick=()=>{if(!$('confirmClear').checked){status('backupStatus','يرجى تأكيد فهمك قبل الحذف.');return}if(confirm('تأكيد نهائي: حذف جميع سجلات الصيانة من هذا الجهاز؟')){db=JSON.parse(JSON.stringify(blank));save();render();status('backupStatus','تم حذف البيانات المحلية.')}};
+$('clearAll').onclick=()=>{if(!$('confirmClear').checked){status('backupStatus','يرجى تأكيد فهمك قبل الحذف.');return}if(confirm('تأكيد نهائي: حذف جميع سجلات الصيانة من هذا الجهاز؟')){db.faults.forEach(x=>markDeleted('maintenance_records',x.id));db.shifts.forEach(x=>markDeleted('shift_reports',x.id));db.hands.forEach(x=>markDeleted('shift_handovers',x.id));db.parts.forEach(x=>markDeleted('spare_parts_requests',x.id));db=JSON.parse(JSON.stringify(blank));save();render();status('backupStatus','تم حذف البيانات المحلية. ستُرسل علامات الحذف للسحابة عند توفر الاتصال.')}};
 render();
 if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();
