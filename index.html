@@ -74,6 +74,7 @@ button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowe
  const setStatus=(id,msg)=>$(id).textContent=msg;
  function persist(){try{localStorage.setItem(KEY,JSON.stringify(faults));localStorage.setItem(DRAFT,$('faultText').value)}catch(_){setStatus('status','تعذر الحفظ المحلي؛ انسخ التقرير للاحتفاظ به.')}}
  function makeReport(){const stamp=new Intl.DateTimeFormat('ar-JO',{dateStyle:'full',timeStyle:'short'}).format(new Date());return 'تقرير الأعطال\nالتاريخ: '+stamp+'\nعدد الأعطال: '+faults.length+'\n====================\n\n'+faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text.trim()).join('\n\n')}
+ function makeFaultsOnly(){return faults.map((f,i)=>'العطل رقم '+(i+1)+'\n'+f.text.trim()).join('\n\n')}
  function resetEditor(){editingId=null;$('faultText').value='';$('editorTitle').textContent='إضافة عطل جديد';$('editorMode').textContent='إدخال جديد';$('saveBtn').textContent='＋ إضافة العطل';$('cancelEditBtn').hidden=true;persist()}
  function render(){
   $('count').textContent=String(faults.length);$('listLabel').textContent=faults.length+' أعطال';
@@ -112,7 +113,7 @@ button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowe
  $('clearBtn').onclick=()=>{$('faultText').value='';persist();setStatus('status','تم مسح النص من المحرر فقط.');};
  $('cancelEditBtn').onclick=()=>{resetEditor();setStatus('status','تم إلغاء التعديل.');};
  $('faultText').addEventListener('input',()=>{try{localStorage.setItem(DRAFT,$('faultText').value)}catch(_){}});
- $('copyBtn').onclick=async()=>{if(!faults.length){setStatus('shareStatus','لا يوجد تقرير لنسخه.');return}const text=makeReport();try{await navigator.clipboard.writeText(text);setStatus('shareStatus','تم نسخ التقرير بالكامل.')}catch(_){const temp=document.createElement('textarea');temp.value=text;document.body.append(temp);temp.select();const ok=document.execCommand('copy');temp.remove();setStatus('shareStatus',ok?'تم نسخ التقرير.':'تعذر النسخ؛ استخدم زر المشاركة أو التنزيل.')}};
+ $('copyBtn').onclick=async()=>{if(!faults.length){setStatus('shareStatus','لا يوجد تقرير لنسخه.');return}const text=makeFaultsOnly();try{await navigator.clipboard.writeText(text);setStatus('shareStatus','تم نسخ الأعطال فقط.')}catch(_){const temp=document.createElement('textarea');temp.value=text;document.body.append(temp);temp.select();const ok=document.execCommand('copy');temp.remove();setStatus('shareStatus',ok?'تم نسخ التقرير.':'تعذر النسخ؛ استخدم زر المشاركة أو التنزيل.')}};
  $('shareBtn').onclick=async()=>{if(!faults.length){setStatus('shareStatus','أضف عطلًا أولاً.');return}const text=makeReport();try{if(navigator.share)await navigator.share({title:'تقرير الأعطال',text});else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');setStatus('shareStatus','تم فتح خيارات المشاركة.')}catch(e){if(e.name!=='AbortError')setStatus('shareStatus','تعذرت المشاركة من هذا المتصفح. استخدم نسخ التقرير.')}};
  $('downloadBtn').onclick=()=>{if(!faults.length){setStatus('shareStatus','أضف عطلًا أولاً.');return}const blob=new Blob(['\ufeff'+makeReport()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='تقرير-الأعطال.txt';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);setStatus('shareStatus','تم تجهيز ملف التقرير للتنزيل.')};
  render();
