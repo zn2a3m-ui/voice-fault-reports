@@ -130,6 +130,8 @@ const deptToDb=v=>({'ميكانيك':'mechanical','كهرباء':'electrical','�
 const deptFromDb=v=>({mechanical:'ميكانيك',electrical:'كهرباء',plumbing:'مواسير وتمديدات',general:'عام'}[v]||'عام');
 const stateToDb=v=>({'جديد':'new','قيد الفحص':'inspection','قيد الإصلاح':'in_progress','تم الإصلاح':'repaired','يحتاج متابعة':'follow_up','بانتظار قطع غيار':'waiting_parts'}[v]||'new');
 const stateFromDb=v=>({new:'جديد',inspection:'قيد الفحص',in_progress:'قيد الإصلاح',repaired:'تم الإصلاح',follow_up:'يحتاج متابعة',waiting_parts:'بانتظار قطع غيار'}[v]||v||'جديد');
+ const splitMeta=(value)=>{const s=String(value||'');const i=s.indexOf('\n');const head=i<0?'':s.slice(0,i);const body=i<0?s:s.slice(i+1);const m=head.match(/^(ميكانيك|كهرباء|مواسير وتمديدات|عام)\s*•\s*(.+)$/);return m?{dept:m[1],meta:m[2],body}:{dept:'عام',meta:'',body:s}};
+ const splitReason=(value)=>{const s=String(value||'');const m=s.match(/^(ميكانيك|كهرباء|مواسير وتمديدات|عام)\s*•\s*(.*)$/);return m?{dept:m[1],reason:m[2]}:{dept:'عام',reason:s}};
 const localDate=v=>{const d=v?new Date(v):new Date();return Number.isNaN(d.getTime())?new Date().toISOString().slice(0,10):d.toISOString().slice(0,10)};
 async function syncCloud(){
  if(!cloudReady||!authSession?.user?.id)return;if(syncBusy){syncAgain=true;return}syncBusy=true;
@@ -157,8 +159,8 @@ async function syncCloud(){
  const merge=(table,local,remote,convert)=>{const ids=new Set(local.map(x=>String(x.id)));remote.forEach(row=>{if(row.deleted_at&&row.local_id){markDeleted(table,row.local_id);return}if(row.local_id&&!ids.has(String(row.local_id))&&!tombstones.includes(tombstoneKey(table,row.local_id))){local.push(convert(row));ids.add(String(row.local_id))}})};
  merge('maintenance_records',db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),state:stateFromDb(r.status),createdAt:r.created_at}));
  merge('shift_reports',db.shifts,rs,r=>({id:r.local_id,shift:r.shift_name,done:r.completed_work,pending:r.pending_work,notes:r.notes,savedAt:r.shift_date}));
- merge('shift_handovers',db.hands,rh,r=>({id:r.local_id,text:r.handover_notes,dept:'عام',state:'مفتوح للمتابعة',createdAt:r.handover_date}));
- merge('spare_parts_requests',db.parts,rp,r=>({id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:'عام',priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:r.reason,status:r.status}));
+ merge('shift_handovers',db.hands,rh,r=>{const m=splitMeta(r.handover_notes);return{id:r.local_id,text:m.body,dept:m.dept,state:m.meta||'مفتوح للمتابعة',createdAt:r.handover_date}});
+ merge('spare_parts_requests',db.parts,rp,r=>{const m=splitReason(r.reason);return{id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:m.dept,priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:m.reason,status:r.status}});
  localStorage.setItem(KEY,JSON.stringify(db));render();cloudMsg('تمت المزامنة بنجاح • سجلاتك محفوظة على السحابة وهذا الجهاز.','ok');
  }catch(e){cloudMsg('تعذرت المزامنة: '+e.message,'err')}
  finally{syncBusy=false;if(syncAgain){syncAgain=false;syncCloud()}}
