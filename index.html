@@ -108,7 +108,8 @@
 <script>
 (()=>{
 'use strict';
-const SUPABASE_URL='https://yyhxlbqhjlptiyigsshs.supabase.co', SUPABASE_KEY='sb_publishable_E9Ckd9dc7H9zJaLTdSBeig_QersQFX_', AUTH_KEY='maintenanceSupervisor.auth.v1';\nconst $=id=>document.getElementById(id), KEY='maintenanceSupervisor.v2', OLD='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
+const SUPABASE_URL='https://yyhxlbqhjlptiyigsshs.supabase.co', SUPABASE_KEY='sb_publishable_E9Ckd9dc7H9zJaLTdSBeig_QersQFX_', AUTH_KEY='maintenanceSupervisor.auth.v1';
+const $=id=>document.getElementById(id), KEY='maintenanceSupervisor.v2', OLD='voiceFaultReports.v1', DRAFT='voiceFaultReports.draft.v1';
 const blank={faults:[],shifts:[],hands:[],parts:[],settings:{endpoint:''}};
 let db=blank;
 try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object')db={...blank,...saved,settings:{...blank.settings,...(saved.settings||{})}};else{const old=JSON.parse(localStorage.getItem(OLD)||'[]');if(Array.isArray(old))db.faults=old.filter(x=>x&&typeof x.text==='string').map(x=>({id:x.id||('legacy-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)),text:x.text,dept:'عام',state:'قديم',createdAt:new Date().toISOString()}));}}catch(e){}
@@ -153,7 +154,8 @@ async function syncCloud(){
  }catch(e){cloudMsg('تعذرت المزامنة: '+e.message,'err')}
  finally{syncBusy=false;if(syncAgain){syncAgain=false;syncCloud()}}
 }
-async function deleteCloud(table,id){if(!cloudReady||!authSession)return;try{await rest(table+'?local_id=eq.'+encodeURIComponent(String(id)),'DELETE')}catch(e){cloudMsg('تعذر حذف السجل من السحابة: '+e.message,'err')}}\nconst save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
+async function deleteCloud(table,id){if(!cloudReady||!authSession)return;try{await rest(table+'?local_id=eq.'+encodeURIComponent(String(id)),'DELETE')}catch(e){cloudMsg('تعذر حذف السجل من السحابة: '+e.message,'err')}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
 function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
 async function signIn(mode){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg(mode==='signup'?'جارٍ إنشاء حساب المالك...':'جارٍ تسجيل الدخول...');let d;if(mode==='signup'){d=await authRequest('signup',{email,password});if(!d.access_token){cloudMsg('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلاً، أكّد بريدك ثم سجّل الدخول.','ok');return}}else d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
 $('loginBtn').onclick=()=>signIn('login');$('signupBtn').onclick=()=>signIn('signup');$('syncBtn').onclick=()=>syncCloud();
