@@ -200,7 +200,7 @@ async function copy(t){if(!t){return}try{await navigator.clipboard.writeText(t);
 function faultTextOnly(){return db.faults.map((f,i)=>'ملاحظة '+(i+1)+' – '+f.dept+'\n'+f.text).join('\n\n')}
 $('saveFault').onclick=()=>{const t=$('faultInput').value.trim();if(!t){status('faultStatus','اكتب الملاحظة أو سجّلها أولاً.');return}db.faults.push({id:uid(),text:t,dept:$('faultDept').value,state:$('faultState').value,createdAt:new Date().toISOString()});$('faultInput').value='';$('rewriteOutput').textContent='تم حفظ النص الأصلي. استخدم زر الصياغة بعد إعداد الربط الآمن.';save();render();status('faultStatus','تم حفظ الملاحظة كما أدخلتها دون تغيير.');};
 $('clearFault').onclick=()=>{$('faultInput').value='';$('rewriteOutput').textContent='';status('faultStatus','تم مسح النص من المحرر.');};
-$('copyFaults').onclick=()=>copy(db.faults.map(f=>f.text).filter(Boolean).join('\\n\\n'));
+$('copyFaults').onclick=()=>copy(db.faults.map(f=>f.text).filter(Boolean).join('\n\n'));
 $('shareFaults').onclick=async()=>{const t=faultTextOnly();if(!t){status('faultShareStatus','لا توجد أعطال لعرضها.');return}try{if(navigator.share)await navigator.share({title:'ملاحظات الصيانة',text:t});else await copy(t)}catch(e){}};
 $('exportFaults').onclick=()=>download('ملاحظات-الصيانة.txt',faultTextOnly());
 let recognition=null,listening=false;
