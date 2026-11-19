@@ -1,4 +1,4 @@
-const CACHE='maintenance-supervisor-v22';
+const CACHE='maintenance-supervisor-v23';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',event=>{
