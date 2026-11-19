@@ -123,7 +123,7 @@ try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof s
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status=(id,msg)=>$(id).textContent=msg;
-let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false;
+let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false,refreshPromise=null;
 const TOMBSTONE_KEY='maintenanceSupervisor.deleted.v1';
 let tombstones=[];try{tombstones=JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]');if(!Array.isArray(tombstones))tombstones=[]}catch(e){tombstones=[]}
 const tombstoneKey=(table,id)=>table+':'+String(id);
@@ -131,7 +131,7 @@ function markDeleted(table,id){const k=tombstoneKey(table,id);if(!tombstones.inc
 const cloudMsg=(msg,kind='')=>{const el=$('cloudStatus');el.textContent=msg;el.className='cloud-state '+kind};
 const authHeaders=(token)=>({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'});
 async function authRequest(path,body){const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.msg||d.message||d.error_description||'تعذر إتمام طلب الدخول');return d}
-async function refreshSession(){if(!authSession?.refresh_token)return false;try{const d=await authRequest('token?grant_type=refresh_token',{refresh_token:authSession.refresh_token});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));return true}catch(e){authSession=null;localStorage.removeItem(AUTH_KEY);return false}}
+async function refreshSession(){if(refreshPromise)return refreshPromise;if(!authSession?.refresh_token)return false;refreshPromise=(async()=>{try{const d=await authRequest('token?grant_type=refresh_token',{refresh_token:authSession.refresh_token});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));return true}catch(e){authSession=null;localStorage.removeItem(AUTH_KEY);return false}})();try{return await refreshPromise}finally{refreshPromise=null}}
 async function rest(table,method,rows){if(!authSession?.access_token)throw new Error('سجّل الدخول أولاً');let r=await fetch(SUPABASE_URL+'/rest/v1/'+table,{method,headers:{...authHeaders(authSession.access_token),'Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':'return=representation','Content-Type':'application/json'},body:rows?JSON.stringify(rows):undefined});if(r.status===401&&await refreshSession()){r=await fetch(SUPABASE_URL+'/rest/v1/'+table,{method,headers:{...authHeaders(authSession.access_token),'Prefer':method==='POST'?'resolution=merge-duplicates,return=minimal':'return=representation','Content-Type':'application/json'},body:rows?JSON.stringify(rows):undefined})}const t=await r.text();if(!r.ok)throw new Error('مزامنة '+table+': '+t.slice(0,220));return t?JSON.parse(t):[]}
 const deptToDb=v=>({'ميكانيك':'mechanical','كهرباء':'electrical','مواسير وتمديدات':'plumbing','عام':'general'}[v]||'general');
 const deptFromDb=v=>({mechanical:'ميكانيك',electrical:'كهرباء',plumbing:'مواسير وتمديدات',general:'عام'}[v]||'عام');
@@ -146,14 +146,14 @@ async function syncCloud(){
  const uid=authSession.user.id;
  const tables=['maintenance_records','shift_reports','shift_handovers','spare_parts_requests','production_reports'];
  const remoteBefore=await Promise.all(tables.map(t=>rest(t+'?select=local_id,deleted_at','GET')));
- remoteBefore.forEach((rows,i)=>rows.filter(r=>r.deleted_at&&r.local_id).forEach(r=>{const k=tombstoneKey(tables[i],r.local_id);if(!tombstones.includes(k))tombstones.push(k)}));
+ const remoteDeleted=new Set();remoteBefore.forEach((rows,i)=>rows.filter(r=>r.deleted_at&&r.local_id).forEach(r=>{const k=tombstoneKey(tables[i],r.local_id);remoteDeleted.add(k);if(!tombstones.includes(k))tombstones.push(k)}));
  localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(tombstones));
  db.faults=db.faults.filter(x=>!tombstones.includes(tombstoneKey('maintenance_records',x.id)));
  db.shifts=db.shifts.filter(x=>!tombstones.includes(tombstoneKey('shift_reports',x.id)));
  db.hands=db.hands.filter(x=>!tombstones.includes(tombstoneKey('shift_handovers',x.id)));
  db.parts=db.parts.filter(x=>!tombstones.includes(tombstoneKey('spare_parts_requests',x.id)));
  db.productionReports=db.productionReports.filter(x=>!tombstones.includes(tombstoneKey('production_reports',x.id)));
- for(let i=0;i<tables.length;i++){const ids=tombstones.filter(k=>k.startsWith(tables[i]+':')).map(k=>k.slice(tables[i].length+1));for(const id of ids){await rest(tables[i]+'?local_id=eq.'+encodeURIComponent(id),'PATCH',[{deleted_at:new Date().toISOString()}])}}
+ for(let i=0;i<tables.length;i++){const ids=tombstones.filter(k=>k.startsWith(tables[i]+':')).map(k=>k.slice(tables[i].length+1));for(const id of ids){if(!remoteDeleted.has(tombstoneKey(tables[i],id)))await rest(tables[i]+'?local_id=eq.'+encodeURIComponent(id)+'&deleted_at=is.null','PATCH',[{deleted_at:new Date().toISOString()}])}}
  const faults=db.faults.filter(f=>!tombstones.includes(tombstoneKey('maintenance_records',f.id))).map(f=>({user_id:uid,local_id:String(f.id),deleted_at:null,record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:new Date().toISOString()}));
  const shifts=db.shifts.filter(x=>!tombstones.includes(tombstoneKey('shift_reports',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),shift_date:localDate(x.createdAt||x.savedAt),shift_name:x.shift||'المسائي',completed_work:x.done||'',pending_work:x.pending||'',notes:x.notes||''}));
  const hands=db.hands.filter(x=>!tombstones.includes(tombstoneKey('shift_handovers',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),handover_date:localDate(x.createdAt),from_shift:'المسائي',to_shift:'الصباحي',handover_notes:(x.dept||'عام')+' • '+(x.state||'مفتوح للمتابعة')+'\n'+(x.text||'')}));
