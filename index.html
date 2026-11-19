@@ -232,7 +232,26 @@ $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{typ
 $('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.faults)||!Array.isArray(d.shifts)||!Array.isArray(d.hands)||!Array.isArray(d.parts))throw new Error();if(!confirm('سيتم استبدال البيانات الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;db={...blank,...d,settings:{...blank.settings,...(d.settings||{})}};save();render();$('apiEndpoint').value=db.settings.endpoint||'';status('backupStatus','تم استيراد النسخة الاحتياطية.')}catch(e){status('backupStatus','الملف غير صالح أو لا يطابق تنسيق النسخة.')}e.target.value=''};
 $('clearAll').onclick=()=>{if(!$('confirmClear').checked){status('backupStatus','يرجى تأكيد فهمك قبل الحذف.');return}if(confirm('تأكيد نهائي: حذف جميع سجلات الصيانة من هذا الجهاز؟')){db.faults.forEach(x=>markDeleted('maintenance_records',x.id));db.shifts.forEach(x=>markDeleted('shift_reports',x.id));db.hands.forEach(x=>markDeleted('shift_handovers',x.id));db.parts.forEach(x=>markDeleted('spare_parts_requests',x.id));db=JSON.parse(JSON.stringify(blank));save();render();status('backupStatus','تم حذف البيانات المحلية. ستُرسل علامات الحذف للسحابة عند توفر الاتصال.')}};
 render();
-if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',async()=>{
+    let hadController=!!navigator.serviceWorker.controller;
+    let reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(hadController&&!reloading){
+        reloading=true;
+        window.location.reload();
+      }
+      hadController=true;
+    });
+    try{
+      const registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+      registration.update().catch(()=>{});
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='visible')registration.update().catch(()=>{});
+      });
+    }catch(error){}
+  });
+}
 })();
 </script>
 </body></html>
