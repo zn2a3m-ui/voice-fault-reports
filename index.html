@@ -28,8 +28,8 @@
  <div class="section-head"><h2>الدخول الآمن والمزامنة السحابية</h2><span class="pill">حسابك الخاص</span></div>
  <div id="authForm">
   <div class="auth-grid"><input id="authEmail" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
-  <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button><button class="secondary" id="signupBtn">إنشاء حساب المالك</button></div>
-  <p class="hint">أنشئ حسابك الشخصي مرة واحدة. إذا طلب النظام تأكيد البريد، افتح رسالة التأكيد ثم ارجع لتسجيل الدخول.</p>
+  <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button></div>
+  <p class="hint">الدخول مخصص لحساب المالك. استخدم البريد الإلكتروني وكلمة المرور المسجلين مسبقاً.</p>
  </div>
  <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div>
  <div id="cloudStatus" class="cloud-state" role="status">البيانات محفوظة محلياً إلى أن تسجل الدخول.</div>
@@ -185,7 +185,7 @@ function deleteCloud(table,id){markDeleted(table,id);if(cloudReady)syncCloud()}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
 function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
 async function signIn(mode){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg(mode==='signup'?'جارٍ إنشاء حساب المالك...':'جارٍ تسجيل الدخول...');let d;if(mode==='signup'){d=await authRequest('signup',{email,password});if(!d.access_token){cloudMsg('تم إرسال طلب إنشاء الحساب. إذا كان تأكيد البريد مفعّلاً، أكّد بريدك ثم سجّل الدخول.','ok');return}}else d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
-$('loginBtn').onclick=()=>signIn('login');$('signupBtn').onclick=()=>signIn('signup');$('syncBtn').onclick=()=>syncCloud();
+$('loginBtn').onclick=()=>signIn('login');$('syncBtn').onclick=()=>syncCloud();
 $('logoutBtn').onclick=async()=>{try{if(authSession?.access_token)await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:authHeaders(authSession.access_token)})}catch(e){}authSession=null;cloudReady=false;localStorage.removeItem(AUTH_KEY);showAuth();cloudMsg('تم تسجيل الخروج. بيانات هذا الجهاز بقيت محفوظة محلياً.')}
 try{authSession=JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch(e){authSession=null}
 showAuth();
