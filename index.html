@@ -63,8 +63,8 @@
   <div class="actions"><button class="primary mic" id="micBtn">🎙️ ابدأ التسجيل</button><button class="secondary" id="saveFault">＋ حفظ الملاحظة</button><button class="quiet" id="clearFault">مسح النص</button></div>
   <div class="status" id="faultStatus" role="status"></div><p class="hint">راجع أسماء المعدات والأرقام بعد التسجيل الصوتي. لا يتم افتراض سبب العطل أو نجاح الإصلاح من تلقاء نفسه.</p>
   <div class="divider"></div><div class="section-head"><h2>صياغة التقرير</h2><span class="pill" id="aiState">Groq • بانتظار اختبار الاتصال</span></div>
-  <div class="actions"><button class="primary" id="rewriteBtn">✨ صياغة إدارية وفنية</button><button class="secondary" id="copyDraftBtn">نسخ الصياغة</button></div>
-  <div id="rewriteOutput" class="output" aria-live="polite">أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.</div>
+  <div class="actions"><button class="primary" id="rewriteBtn">✨ صياغة إدارية وفنية</button><button class="secondary" id="technicalBtn">🔎 تحليل فني بالمراجع</button><button class="secondary" id="copyDraftBtn">نسخ الصياغة</button></div>
+  <div id="rewriteOutput" class="output" aria-live="polite">أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.</div><div class="divider"></div><h2>التحليل الفني والمراجع</h2><div id="technicalOutput" class="output" aria-live="polite">أدخل وصف الحالة ثم اضغط «تحليل فني بالمراجع» للحصول على تقييم أولي وفحوصات مقترحة ومراجع ذات صلة.</div>
   <p class="hint">مفتاح Groq يُحفظ في أسرار Supabase على الخادم، ولا يظهر داخل التطبيق أو على الهاتف.</p>
  </div>
  <div class="panel"><div class="section-head"><h2>سجل الأعطال والملاحظات</h2><span class="muted" id="faultListCount">0 عناصر</span></div><div id="faultList" class="cards"><div class="empty">لا توجد ملاحظات مسجلة.</div></div><div class="divider"></div><div class="actions"><button class="primary" id="copyFaults">نسخ الأعطال فقط</button><button class="secondary" id="shareFaults">مشاركة</button><button class="quiet" id="exportFaults">تنزيل TXT</button></div><div class="status" id="faultShareStatus"></div></div>
@@ -226,6 +226,14 @@ $('rewriteBtn').onclick=async()=>{
  try{let res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});if(res.status===401&&await refreshSession())res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));const out=data.text;if(typeof out!=='string'||!out.trim())throw new Error('لم تصل صياغة صالحة');$('rewriteOutput').textContent=out;status('faultStatus','تم إعداد الصياغة. راجعها قبل اعتمادها.');}
  catch(e){status('faultStatus',e.message||'تعذر الاتصال بخدمة الصياغة.');$('rewriteOutput').textContent='لم يتم تغيير النص الأصلي. النص الذي أدخلته ما زال محفوظاً.'}
  finally{$('rewriteBtn').disabled=false;$('rewriteBtn').textContent='✨ صياغة إدارية وفنية'}
+};
+$('technicalBtn').onclick=async()=>{
+ const textIn=$('faultInput').value.trim();if(!textIn){status('faultStatus','أدخل وصف الحالة أولاً.');return}
+ if(!authSession?.access_token){status('faultStatus','سجّل الدخول أولاً لتشغيل التحليل الفني.');return}
+ const b=$('technicalBtn');b.disabled=true;b.textContent='جارٍ تحليل الحالة...';$('technicalOutput').textContent='جارٍ إعداد التقييم الفني ومراجعة المراجع المتاحة...';
+ try{let res=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'technical_assessment',text:textIn,department:$('faultDept').value,status:$('faultState').value})});if(res.status===401&&await refreshSession())res=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'technical_assessment',text:textIn,department:$('faultDept').value,status:$('faultState').value})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));if(typeof data.text!=='string'||!data.text.trim())throw new Error('لم يصل تحليل فني صالح');$('technicalOutput').textContent=data.text;status('faultStatus','اكتمل التحليل الأولي. راجع حدود المراجع قبل اعتماد أي إجراء.')}
+ catch(e){$('technicalOutput').textContent='تعذر إعداد التحليل الفني. '+(e.message||'حاول مرة أخرى لاحقاً.');status('faultStatus','تعذر التحليل الفني.')}
+ finally{b.disabled=false;b.textContent='🔎 تحليل فني بالمراجع'}
 };
 $('copyDraftBtn').onclick=()=>copy($('rewriteOutput').textContent);
 function productionReportText(){return $('prodIssue').value.trim()}
