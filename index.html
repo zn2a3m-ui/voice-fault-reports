@@ -161,7 +161,7 @@ async function syncCloud(){
  if(shifts.length)await rest('shift_reports?on_conflict=user_id,local_id','POST',shifts);
  if(hands.length)await rest('shift_handovers?on_conflict=user_id,local_id','POST',hands);
  if(parts.length)await rest('spare_parts_requests?on_conflict=user_id,local_id','POST',parts);
- const production=db.productionReports.filter(x=>!tombstones.includes(tombstoneKey('production_reports',x.id))).map(x=>({user_id:uid(),local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),report_date:x.date||localDate(x.createdAt),shift_name:x.shift||'',report_type:x.type||'production',production_line:x.line||'',target_quantity:x.target?Number(x.target):null,actual_quantity:x.actual?Number(x.actual):null,issue_description:x.description||'',downtime_minutes:x.downtime?Number(x.downtime):null,production_impact:x.impact||'',action_taken:x.action||'',notes:x.notes||'',report_text:x.reportText||''}));
+ const production=db.productionReports.filter(x=>!tombstones.includes(tombstoneKey('production_reports',x.id))).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:new Date().toISOString(),report_date:x.date||localDate(x.createdAt),shift_name:x.shift||'',report_type:x.type||'production',production_line:x.line||'',target_quantity:x.target?Number(x.target):null,actual_quantity:x.actual?Number(x.actual):null,issue_description:x.description||'',downtime_minutes:x.downtime?Number(x.downtime):null,production_impact:x.impact||'',action_taken:x.action||'',notes:x.notes||'',report_text:x.reportText||''}));
  if(production.length)await rest('production_reports?on_conflict=user_id,local_id','POST',production);
  const [rf,rs,rh,rp,rprod]=await Promise.all([
  rest('maintenance_records?select=*&order=created_at.desc','GET'),
