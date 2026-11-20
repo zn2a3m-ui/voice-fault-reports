@@ -48,7 +48,8 @@
 - معرّف التطبيق: `com.zn2a3m.maintenancesupervisor`
 - اسم التطبيق: مساعد مشرف الصيانة
 - صلاحية الميكروفون: `RECORD_AUDIO` و`MODIFY_AUDIO_SETTINGS`
-- ملف APK التجريبي ينتج تلقائياً عبر GitHub Actions في سير العمل `Build Android APK`، ضمن Artifact باسم `maintenance-supervisor-android-debug`.
+- ملف APK التجريبي ينتج تلقائياً عبر GitHub Actions في سير العمل `Build Android APK`، ويُنشر كإصدار تجريبي قابل للتنزيل من [صفحة الإصدارات](https://github.com/zn2a3m-ui/voice-fault-reports/releases) وضمن Artifact باسم `maintenance-supervisor-android-debug`.
+- هذه حزمة تثبيت داخلية موقعة بمفتاح Debug ثابت لتسهيل تحديث النسخة التجريبية فوق السابقة؛ وليست بعد نسخة متجر Google Play الموقعة بمفتاح إصدار إنتاجي.
 - يحتفظ التطبيق ببيانات `localStorage` عند تحديث النسخة فوق النسخة السابقة بنفس معرّف التطبيق. لا تحذف التطبيق من الهاتف عند التحديث؛ حذف التطبيق قد يحذف بياناته المحلية.
 - تفريغ الصوت يحتاج اتصال إنترنت وتسجيل دخول صالحاً، لأن Whisper/Groq يعملان على الخادم.
 
