@@ -49,6 +49,7 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: maintenance-supervisor-debug-keystore-v1
+          save-always: true
       - name: Create stable debug signing key when needed
         if: steps.debug-keystore.outputs.cache-hit != 'true'
         run: |
