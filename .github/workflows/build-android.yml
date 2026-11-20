@@ -89,12 +89,12 @@ jobs:
               "android.permission.INTERNET",
           ]
           additions = "".join(
-              f'\\n    <uses-permission android:name="{name}" />'
+              f'\n    <uses-permission android:name="{name}" />'
               for name in required
               if f'android:name="{name}"' not in s
           )
           if additions:
-              s = s[:i+1] + additions + "\\n" + s[i+1:]
+              s = s[:i+1] + additions + "\n" + s[i+1:]
           p.write_text(s)
           PY
       - name: Synchronize Capacitor
