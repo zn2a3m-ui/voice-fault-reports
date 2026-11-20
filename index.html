@@ -26,7 +26,7 @@
  <p class="hint">بعد تنزيل ملف التحديث، افتحه ووافق على تثبيته. لا تحذف التطبيق؛ اختر تحديث/تثبيت فوق النسخة الحالية.</p>
 </section>
 <style>
-.auth-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
+.auth-panel{display:none!important;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
 .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.auth-panel input{width:100%;border:1px solid #cbd9d3;border-radius:11px;padding:11px;background:#fcfefd}
 .cloud-state{font-size:12px;color:var(--muted);margin-top:7px}.cloud-state.ok{color:var(--green)}.cloud-state.err{color:var(--red)}
 </style>
@@ -49,7 +49,7 @@
   <p class="hint">لن تتغير كلمة المرور إلا بعد فتح رابط الاستعادة الصحيح وإتمام الحفظ هنا.</p>
  </div>
  <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div>
- <div id="cloudStatus" class="cloud-state" role="status">البيانات محفوظة محلياً إلى أن تسجل الدخول.</div>
+ <div id="cloudStatus" class="cloud-state" role="status">يتم حفظ البيانات على هذا الجهاز تلقائياً.</div>
 </section>
 
 <div class="stats">
@@ -71,14 +71,14 @@
   <button class="tile" data-go="faults"><span class="emoji">⚙️</span><b>متابعة الأعطال</b><span>حالات الإصلاح والمتابعة</span></button>
   <button class="tile" data-go="settings"><span class="emoji">🤖</span><b>إعداد المساعد الذكي</b><span>ربط خدمة الصياغة الآمنة</span></button>
  </div></div>
- <div class="panel"><div class="section-head"><h2>آخر المستجدات</h2><span class="muted">مزامنة سحابية عند تسجيل الدخول</span></div><div id="recentList" class="cards"><div class="empty">لا توجد أعمال مسجلة بعد.</div></div></div>
+ <div class="panel"><div class="section-head"><h2>آخر المستجدات</h2><span class="muted">سجل الأعمال المسجلة</span></div><div id="recentList" class="cards"><div class="empty">لا توجد أعمال مسجلة بعد.</div></div></div>
 </section>
 <section id="faults" class="view hidden">
  <div class="panel"><div class="section-head"><h2 id="faultTitle">تسجيل عطل أو ملاحظة فنية</h2><span class="pill">إدخال صوتي أو كتابي</span></div>
   <div class="grid2"><div class="field"><label for="faultDept">التخصص</label><select id="faultDept"><option>ميكانيك</option><option>كهرباء</option><option>مواسير وتمديدات</option><option>عام</option></select></div><div class="field"><label for="faultState">حالة العمل</label><select id="faultState"><option>جديد</option><option>قيد الفحص</option><option>قيد الإصلاح</option><option>تم الإصلاح</option><option>يحتاج متابعة</option><option>بانتظار قطع غيار</option></select></div></div>
   <div class="field"><label for="faultInput">احكِ أو اكتب ما حدث بطريقتك الطبيعية</label><textarea id="faultInput" placeholder="مثال: السير صار يعمل صوت عند الرول، وقفنا الخط وفحصناه ولسه بدنا نتابع السبب..."></textarea></div>
   <div class="actions"><button class="primary mic" id="micBtn">🎙️ ابدأ التسجيل</button><button class="secondary" id="saveFault">＋ حفظ الملاحظة</button><button class="quiet" id="clearFault">مسح النص</button></div>
-  <div class="status" id="faultStatus" role="status"></div><p class="hint">اضغط لبدء التسجيل، ثم اضغط الزر نفسه لإيقافه وتحويل كلامك إلى نص. يلزم تسجيل الدخول والسماح باستخدام الميكروفون. راجع أسماء المعدات والأرقام بعد التفريغ.</p>
+  <div class="status" id="faultStatus" role="status"></div><p class="hint">اضغط لبدء التسجيل، ثم اضغط الزر نفسه لإيقافه وتحويل كلامك إلى نص. يلزم السماح باستخدام الميكروفون. راجع أسماء المعدات والأرقام بعد التفريغ.</p>
   <div class="divider"></div><div class="section-head"><h2>صياغة التقرير</h2><span class="pill" id="aiState">صياغة ذكية عبر Groq</span></div>
   <div class="actions"><button class="primary" id="rewriteBtn">✨ صياغة إدارية وفنية</button><button class="secondary" id="technicalBtn">🔎 تحليل فني بالمراجع</button><button class="secondary" id="copyDraftBtn">نسخ الصياغة</button></div>
   <div id="rewriteOutput" class="output" aria-live="polite">أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.</div><div class="divider"></div><h2>التحليل الفني والمراجع</h2><div id="technicalOutput" class="output" aria-live="polite">أدخل وصف الحالة ثم اضغط «تحليل فني بالمراجع» للحصول على تقييم أولي وفحوصات مقترحة ومراجع ذات صلة.</div>
@@ -119,7 +119,7 @@
 </section>
 <section id="settings" class="view hidden">
  <div class="panel"><div class="section-head"><h2>إعدادات المساعد</h2><span class="pill">إعدادات محلية</span></div>
-  <div class="notice">سجلاتك محفوظة محلياً وتتم مزامنتها مع Supabase بعد تسجيل الدخول. الصياغة الإدارية والتحليل الفني يعملان عبر خدمة Groq الخلفية؛ مفتاح الخدمة محفوظ في أسرار الخادم ولا يظهر في التطبيق.</div>
+  <div class="notice">تُحفظ السجلات محلياً على هذا الجهاز. عند توفر جلسة سحابية محفوظة تتم المزامنة تلقائياً. تعمل الصياغة والتحليلات عبر خدمة Groq الخلفية عند توفر اتصالها.</div>
   <div class="field"><label for="apiEndpoint">عنوان خدمة الصياغة الآمنة (Groq)</label><input id="apiEndpoint" placeholder="https://your-project.supabase.co/functions/v1/maintenance-assistant"></div>
   <div class="actions"><button class="primary" id="saveSettings">حفظ العنوان</button><button class="secondary" id="testAI">اختبار الاتصال</button></div><div id="settingsStatus" class="status"></div>
   <div class="divider"></div><h2>البيانات والنسخ الاحتياطي</h2><p class="muted">تحفظ السجلات محلياً في هذا المتصفح. احفظ نسخة احتياطية دورياً، ولا تعتمد على جهاز واحد لحفظ سجلات المصنع.</p>
@@ -279,7 +279,7 @@ function bindVoiceButton(buttonId,inputId,statusId){
   if(activeVoice&&activeVoice.recorder.state==="recording"){
    voiceStatus(statusId,"يوجد تسجيل آخر قيد التنفيذ. أوقف التسجيل الحالي أولاً.");return;
   }
-  if(!authSession?.access_token){voiceStatus(statusId,"سجّل الدخول أولاً لاستخدام التفريغ الصوتي.");return}
+  if(!authSession?.access_token){voiceStatus(statusId,"خدمة تحويل الصوت إلى نص غير مفعّلة حالياً على هذا الجهاز. يمكنك الكتابة وحفظ التقرير محلياً.");return}
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){voiceStatus(statusId,"التسجيل الصوتي غير مدعوم في هذا المتصفح. استخدم ميكروفون لوحة المفاتيح مؤقتاً.");return}
   let stream;
   try{
@@ -339,7 +339,7 @@ function bindVoiceButton(buttonId,inputId,statusId){
 bindVoiceButton("micBtn","faultInput","faultStatus");
 $('rewriteBtn').onclick=async()=>{
  const textIn=$('faultInput').value.trim();if(!textIn){status('faultStatus','أدخل وصف العطل أولاً.');return}
- if(!authSession?.access_token){status('faultStatus','سجّل الدخول إلى حسابك أولاً لتشغيل الصياغة الذكية.');return}
+ if(!authSession?.access_token){status('faultStatus','خدمة الصياغة الذكية غير متاحة حالياً؛ يمكنك حفظ الوصف يدوياً على هذا الجهاز.');return}
  const endpoint=AI_ENDPOINT;
  lastRewrittenInput='';
  $('rewriteBtn').disabled=true;$('rewriteBtn').textContent='جارٍ تجهيز الصياغة...';
@@ -353,7 +353,7 @@ $('rewriteBtn').onclick=async()=>{
 };
 $('technicalBtn').onclick=async()=>{
  const textIn=$('faultInput').value.trim();if(!textIn){status('faultStatus','أدخل وصف الحالة أولاً.');return}
- if(!authSession?.access_token){status('faultStatus','سجّل الدخول أولاً لتشغيل التحليل الفني.');return}
+ if(!authSession?.access_token){status('faultStatus','خدمة التحليل الفني غير متاحة حالياً على هذا الجهاز.');return}
  const b=$('technicalBtn');b.disabled=true;b.textContent='جارٍ تحليل الحالة...';$('technicalOutput').textContent='جارٍ إعداد التقييم الفني ومراجعة المراجع المتاحة...';
  try{let res=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'technical_assessment',text:textIn,department:$('faultDept').value,status:$('faultState').value})});if(res.status===401&&await refreshSession())res=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'technical_assessment',text:textIn,department:$('faultDept').value,status:$('faultState').value})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));if(typeof data.text!=='string'||!data.text.trim())throw new Error('لم يصل تحليل فني صالح');$('technicalOutput').textContent=data.text;status('faultStatus','اكتمل التحليل الأولي. راجع حدود المراجع قبل اعتماد أي إجراء.')}
  catch(e){$('technicalOutput').textContent='تعذر إعداد التحليل الفني. '+(e.message||'حاول مرة أخرى لاحقاً.');status('faultStatus','تعذر التحليل الفني.')}
@@ -362,7 +362,7 @@ $('technicalBtn').onclick=async()=>{
 $('copyDraftBtn').onclick=()=>copy($('rewriteOutput').textContent);
 function productionReportText(){return $('prodIssue').value.trim()}
 bindVoiceButton("prodMic","prodIssue","prodStatus");
-$('rewriteProduction').onclick=async()=>{const raw=productionReportText();if(!raw){status('prodStatus','اكتب أو احكِ وصف الحالة أولاً.');return}if(!authSession?.access_token){status('prodStatus','سجّل الدخول أولاً لتشغيل الصياغة الذكية.');return}const b=$('rewriteProduction');b.disabled=true;try{let r=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'production_report_rewrite',report_type:'auto',text:raw})});if(r.status===401&&await refreshSession())r=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'production_report_rewrite',report_type:'auto',text:raw})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'تعذرت الصياغة');$('prodOutput').textContent=d.text||raw;status('prodStatus','تم إعداد التقرير الاحترافي؛ راجعه قبل اعتماده.')}catch(e){status('prodStatus',e.message||'تعذرت الصياغة')}finally{b.disabled=false}};
+$('rewriteProduction').onclick=async()=>{const raw=productionReportText();if(!raw){status('prodStatus','اكتب أو احكِ وصف الحالة أولاً.');return}if(!authSession?.access_token){status('prodStatus','خدمة الصياغة الذكية غير متاحة حالياً على هذا الجهاز.');return}const b=$('rewriteProduction');b.disabled=true;try{let r=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'production_report_rewrite',report_type:'auto',text:raw})});if(r.status===401&&await refreshSession())r=await fetch(AI_ENDPOINT,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'production_report_rewrite',report_type:'auto',text:raw})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'تعذرت الصياغة');$('prodOutput').textContent=d.text||raw;status('prodStatus','تم إعداد التقرير الاحترافي؛ راجعه قبل اعتماده.')}catch(e){status('prodStatus',e.message||'تعذرت الصياغة')}finally{b.disabled=false}};
 $('saveProduction').onclick=()=>{const raw=productionReportText(),out=$('prodOutput').textContent;if(!raw){status('prodStatus','اكتب وصف الحالة أولاً.');return}if(!out||out==='سيظهر التقرير هنا.'||out==='اكتب وصف الحالة ثم اضغط «اكتب التقرير الاحترافي».'){status('prodStatus','اضغط صياغة التقرير أولاً ثم احفظه.');return}db.productionReports.push({id:uid(),date:localDate(),type:'auto',description:raw,reportText:out,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});save();render();status('prodStatus',cloudReady?'تم حفظ التقرير على الجهاز وجارٍ مزامنته مع الحساب.':'تم حفظ التقرير على هذا الجهاز.')};
 $('clearProduction').onclick=()=>{$('prodIssue').value='';$('prodOutput').textContent='اكتب وصف الحالة ثم اضغط «اكتب التقرير الاحترافي».';status('prodStatus','تم مسح الوصف.')};
 $('copyProduction').onclick=()=>copy($('prodOutput').textContent==='اكتب وصف الحالة ثم اضغط «اكتب التقرير الاحترافي».'?productionReportText():$('prodOutput').textContent);
@@ -377,7 +377,7 @@ $('savePart').onclick=()=>{const name=$('partName').value.trim(),qtyRaw=$('partQ
 $('copyParts').onclick=()=>copy(db.parts.map((x,i)=>(i+1)+'. '+x.name+' | الكمية: '+x.qty+' | '+x.dept+' | الأولوية: '+x.priority+'\nالسبب: '+x.reason).join('\n\n'));
 db.settings.endpoint=AI_ENDPOINT;$('apiEndpoint').value=AI_ENDPOINT;$('apiEndpoint').readOnly=true;
 $('saveSettings').onclick=()=>status('settingsStatus','عنوان الخدمة مربوط تلقائياً ولا يحتاج إلى تعديل.');
-$('testAI').onclick=async()=>{if(!authSession?.access_token){status('settingsStatus','سجّل الدخول أولاً لاختبار الخدمة.');return}try{let r=await fetch(AI_ENDPOINT,{headers:authHeaders(authSession.access_token)});if(r.status===401&&await refreshSession())r=await fetch(AI_ENDPOINT,{headers:authHeaders(authSession.access_token)});const d=await r.json().catch(()=>({}));status('settingsStatus',r.ok?(d.configured?'اتصال Groq ناجح، ومفتاح الخدمة مضبوط على الخادم.':'الخادم يعمل، لكن يلزم إضافة مفتاح الذكاء الاصطناعي في أسرار Supabase.'):(d.error||('فشل الاختبار: '+r.status)));}catch(e){status('settingsStatus','تعذر الوصول إلى الخدمة. تحقق من الاتصال بالإنترنت.')}};
+$('testAI').onclick=async()=>{if(!authSession?.access_token){status('settingsStatus','لا توجد جلسة خدمة محفوظة على هذا الجهاز لاختبار الاتصال.');return}try{let r=await fetch(AI_ENDPOINT,{headers:authHeaders(authSession.access_token)});if(r.status===401&&await refreshSession())r=await fetch(AI_ENDPOINT,{headers:authHeaders(authSession.access_token)});const d=await r.json().catch(()=>({}));status('settingsStatus',r.ok?(d.configured?'اتصال Groq ناجح، ومفتاح الخدمة مضبوط على الخادم.':'الخادم يعمل، لكن يلزم إضافة مفتاح الذكاء الاصطناعي في أسرار Supabase.'):(d.error||('فشل الاختبار: '+r.status)));}catch(e){status('settingsStatus','تعذر الوصول إلى الخدمة. تحقق من الاتصال بالإنترنت.')}};
 function download(name,text){if(!text){alert('لا توجد بيانات للتنزيل.');return}const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url)}
 $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='نسخة-مساعد-الصيانة.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);status('backupStatus','تم تجهيز النسخة الاحتياطية.')};
 $('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.faults)||!Array.isArray(d.shifts)||!Array.isArray(d.hands)||!Array.isArray(d.parts))throw new Error();if(!Array.isArray(d.productionReports))d.productionReports=[];if(!confirm('سيتم استبدال البيانات الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;db={...blank,...d,settings:{...blank.settings,...(d.settings||{})}};save();render();$('apiEndpoint').value=db.settings.endpoint||'';status('backupStatus','تم استيراد النسخة الاحتياطية.')}catch(e){status('backupStatus','الملف غير صالح أو لا يطابق تنسيق النسخة.')}e.target.value=''};
