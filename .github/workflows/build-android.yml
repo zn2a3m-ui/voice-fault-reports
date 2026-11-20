@@ -108,6 +108,7 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q "com.zn2a3m.maintenancesupervisor"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | grep -q "android.permission.RECORD_AUDIO"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
       - name: Remove superseded APK built with a temporary signing key
         env:
           GH_TOKEN: ${{ github.token }}
