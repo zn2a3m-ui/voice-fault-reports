@@ -218,8 +218,26 @@ function render(){
 }
 async function copy(t){if(!t){return}try{await navigator.clipboard.writeText(t);alert('تم النسخ.')}catch(e){const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove();alert('تم النسخ.');}}
 function faultTextOnly(){return db.faults.map((f,i)=>'ملاحظة '+(i+1)+' – '+f.dept+'\n'+f.text).join('\n\n')}
-$('saveFault').onclick=()=>{const t=$('faultInput').value.trim();if(!t){status('faultStatus','اكتب الملاحظة أو سجّلها أولاً.');return}db.faults.push({id:uid(),text:t,dept:$('faultDept').value,state:$('faultState').value,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});$('faultInput').value='';$('rewriteOutput').textContent='تم حفظ النص الأصلي دون تعديل. يمكنك الآن إعداد الصياغة الاحترافية.';save();render();status('faultStatus',cloudReady?'تم حفظ الملاحظة على الجهاز وجارٍ مزامنتها مع الحساب.':'تم حفظ الملاحظة على هذا الجهاز دون تغيير.');};
-$('clearFault').onclick=()=>{$('faultInput').value='';$('rewriteOutput').textContent='';status('faultStatus','تم مسح النص من المحرر.');};
+let activeFaultDraftId=null,activeFaultDraftText="",lastRewrittenInput="";
+$('saveFault').onclick=()=>{
+ const t=$('faultInput').value.trim();
+ if(!t){status('faultStatus','اكتب الملاحظة أو سجّلها أولاً.');return}
+ const now=new Date().toISOString();
+ const polished=lastRewrittenInput===t?$('rewriteOutput').textContent.trim():"";
+ let record=db.faults.find(x=>x.id===activeFaultDraftId);
+ if(!record||activeFaultDraftText!==t){
+  record={id:uid(),text:t,dept:$('faultDept').value,state:$('faultState').value,createdAt:now,updatedAt:now};
+  db.faults.push(record);
+  activeFaultDraftId=record.id;
+  activeFaultDraftText=t;
+ }else{
+  record.dept=$('faultDept').value;record.state=$('faultState').value;record.updatedAt=now;
+ }
+ if(polished&&polished!=="أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.")record.polished=polished;
+ save();render();
+ status('faultStatus',cloudReady?'تم حفظ العطل والنص الأصلي والصياغة المتاحة، وجارٍ مزامنتها.':'تم حفظ العطل على هذا الجهاز.');
+};
+$('clearFault').onclick=()=>{$('faultInput').value='';activeFaultDraftId=null;activeFaultDraftText="";lastRewrittenInput="";$('rewriteOutput').textContent='';status('faultStatus','تم مسح النص من المحرر.');};
 $('copyFaults').onclick=()=>copy(db.faults.filter(f=>['ميكانيك','كهرباء','مواسير وتمديدات'].includes(f.dept)).map(f=>f.text).filter(Boolean).join('\n\n'));
 $('shareFaults').onclick=async()=>{const t=faultTextOnly();if(!t){status('faultShareStatus','لا توجد أعطال لعرضها.');return}try{if(navigator.share)await navigator.share({title:'ملاحظات الصيانة',text:t});else await copy(t)}catch(e){}};
 $('exportFaults').onclick=()=>download('ملاحظات-الصيانة.txt',faultTextOnly());
@@ -299,8 +317,13 @@ $('rewriteBtn').onclick=async()=>{
  const textIn=$('faultInput').value.trim();if(!textIn){status('faultStatus','أدخل وصف العطل أولاً.');return}
  if(!authSession?.access_token){status('faultStatus','سجّل الدخول إلى حسابك أولاً لتشغيل الصياغة الذكية.');return}
  const endpoint=AI_ENDPOINT;
+ lastRewrittenInput='';
  $('rewriteBtn').disabled=true;$('rewriteBtn').textContent='جارٍ تجهيز الصياغة...';
- try{let res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});if(res.status===401&&await refreshSession())res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));const out=data.text;if(typeof out!=='string'||!out.trim())throw new Error('لم تصل صياغة صالحة');$('rewriteOutput').textContent=out;status('faultStatus','تم إعداد الصياغة. راجعها قبل اعتمادها.');}
+ try{let res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});if(res.status===401&&await refreshSession())res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));const out=data.text;if(typeof out!=='string'||!out.trim())throw new Error('لم تصل صياغة صالحة');$('rewriteOutput').textContent=out;
+ lastRewrittenInput=textIn;
+ const savedRecord=db.faults.find(x=>x.id===activeFaultDraftId);
+ if(savedRecord&&activeFaultDraftText===textIn){savedRecord.polished=out;savedRecord.updatedAt=new Date().toISOString();save();render();}
+ status('faultStatus','تم إعداد الصياغة. راجعها قبل اعتمادها.');}
  catch(e){status('faultStatus',e.message||'تعذر الاتصال بخدمة الصياغة.');$('rewriteOutput').textContent='لم يتم تغيير النص الأصلي. النص الذي أدخلته ما زال محفوظاً.'}
  finally{$('rewriteBtn').disabled=false;$('rewriteBtn').textContent='✨ صياغة إدارية وفنية'}
 };
