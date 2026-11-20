@@ -85,7 +85,7 @@
    <button class="plant-line plant-shared" data-line="shared"><strong>قسم التقطيع المشترك</strong><small>يخدم الخطين</small></button>
   </div>
   <div id="plantDepartments" class="hidden"><div class="actions"><button class="plant-back" id="plantBackLines">← كل الخطوط</button></div><div id="plantDeptGrid" class="dept-grid"></div></div>
-  <div id="plantEquipment" class="hidden"><div class="actions"><button class="plant-back" id="plantBackDepartments">← الأقسام</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div>
+  <div id="plantEquipment" class="hidden"><div class="actions"><button class="plant-back" id="plantBackDepartments">← الأقسام</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div><p class="status" id="plantStatusMsg"></p>
    <div id="equipmentForm" class="panel hidden" style="margin-top:12px">
     <h2>إضافة معدة للقسم</h2>
     <div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div>
@@ -382,7 +382,7 @@ function renderEquipment(){
  $('equipmentList').innerHTML=list.length?list.map(e=>'<div class="equipment-card"><div><strong>'+esc(e.name)+'</strong><small>'+(e.asset_code?esc(e.asset_code)+' • ':'')+statusLabel(e.status)+'</small></div><span class="pill">'+(e.status==='operational'?'عاملة':e.status==='fault'?'عطل':'متابعة')+'</span></div>').join(''):'<div class="empty">لا توجد معدات مسجلة هنا بعد. أضف أول معدة لهذا القسم.</div>';
 }
 $('plantBackLines').onclick=()=>{$('plantDepartments').classList.add('hidden');$('plantLines').classList.remove('hidden');$('plantHeading').textContent='هيكل المسلخ';$('plantSubheading').textContent='اختر الخط لعرض أقسامه ومعداته'};
-$('plantBackDepartments').onclick=()=>{$('plantEquipment').classList.add('hidden');$('plantDepartments').classList.remove('hidden');$('plantHeading').textContent=selectedPlantLine?.name||'الأقسام';$('plantSubheading').textContent='اختر القسم لعرض معداته'};
+$('plantBackDepartments').onclick=()=>{if(selectedPlantLine)openPlantLine(selectedPlantLine.code)};
 $('addEquipmentBtn').onclick=()=>{$('equipmentForm').classList.remove('hidden');$('equipmentName').focus()};
 $('cancelEquipmentBtn').onclick=()=>$('equipmentForm').classList.add('hidden');
 $('saveEquipmentBtn').onclick=async()=>{
@@ -390,11 +390,11 @@ $('saveEquipmentBtn').onclick=async()=>{
  const item={id:uid(),department_id:selectedPlantDepartment.id,name,asset_code:$('equipmentCode').value.trim()||null,status:$('equipmentStatus').value,notes:$('equipmentNotes').value.trim(),is_active:true,created_at:new Date().toISOString()};
  let saved=false;
  if(authSession?.access_token&&cloudReady){
-  try{await rest('maintenance_equipment','POST',[{user_id:authSession.user.id,department_id:item.department_id,name:item.name,asset_code:item.asset_code,status:item.status,notes:item.notes,is_active:true}]);saved=true;await loadPlant();openPlantLine(selectedPlantLine.code);openPlantDepartment(selectedPlantDepartment.id)}catch(e){status('equipmentStatusMsg','تعذر حفظها سحابياً؛ حُفظت على هذا الجهاز فقط.')}
+  try{await rest('maintenance_equipment','POST',[{user_id:authSession.user.id,department_id:item.department_id,name:item.name,asset_code:item.asset_code,status:item.status,notes:item.notes,is_active:true}]);saved=true;await loadPlant();openPlantLine(selectedPlantLine.code);openPlantDepartment(selectedPlantDepartment.id)}catch(e){status('plantStatusMsg','تعذر حفظها سحابياً؛ حُفظت على هذا الجهاز فقط.')}
  }
- if(!saved){plantLocal.push(item);localStorage.setItem(STRUCTURE_KEY,JSON.stringify(plantLocal));plantEquipment=plantLocal;renderPlant();renderEquipment()}
+ if(!saved){plantLocal.push(item);localStorage.setItem(STRUCTURE_KEY,JSON.stringify(plantLocal));plantEquipment=plantLocal;if(selectedPlantLine){openPlantLine(selectedPlantLine.code);openPlantDepartment(selectedPlantDepartment.id)}else{renderPlant();renderEquipment()}}
  $('equipmentName').value='';$('equipmentCode').value='';$('equipmentNotes').value='';$('equipmentForm').classList.add('hidden');
- status('equipmentStatusMsg',saved?'تم حفظ المعدة في سجل القسم.':'تم حفظ المعدة محلياً على هذا الجهاز.');
+ status('plantStatusMsg',saved?'تم حفظ المعدة في سجل القسم.':'تم حفظ المعدة محلياً على هذا الجهاز.');
 };
 document.querySelector('[data-tab="plant"]')?.addEventListener('click',()=>loadPlant());
 document.querySelector('[data-tab="faults"]')?.addEventListener('click',()=>loadPlant());
