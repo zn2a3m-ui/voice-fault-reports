@@ -83,9 +83,18 @@ jobs:
           i = s.find('>', s.find(marker))
           if i < 0:
               raise SystemExit("Android manifest root element not found")
-          permissions = '''\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.INTERNET" />\n'''
-          if "android.permission.RECORD_AUDIO" not in s:
-              s = s[:i+1] + permissions + s[i+1:]
+          required = [
+              "android.permission.RECORD_AUDIO",
+              "android.permission.MODIFY_AUDIO_SETTINGS",
+              "android.permission.INTERNET",
+          ]
+          additions = "".join(
+              f'\\n    <uses-permission android:name="{name}" />'
+              for name in required
+              if f'android:name="{name}"' not in s
+          )
+          if additions:
+              s = s[:i+1] + additions + "\\n" + s[i+1:]
           p.write_text(s)
           PY
       - name: Synchronize Capacitor
