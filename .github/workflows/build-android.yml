@@ -62,10 +62,10 @@ jobs:
           if gradle is None:
               raise SystemExit("Android app Gradle file not found")
           source = gradle.read_text()
-          source, count = re.subn(r'(?m)^(\\s*versionCode\\s*(?:=\\s*)?)\\d+', lambda m: m.group(1) + os.environ["BUILD_NUMBER"], source, count=1)
+          source, count = re.subn(r'(?m)^(\s*versionCode\s*(?:=\s*)?)\d+', lambda m: m.group(1) + os.environ["BUILD_NUMBER"], source, count=1)
           if count != 1:
               raise SystemExit("Could not update Android versionCode")
-          source = re.sub(r'(?m)^(\\s*versionName\\s*(?:=\\s*)?")[^"]*(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(2), source, count=1)
+          source = re.sub(r'(?m)^(\s*versionName\s*(?:=\s*)?")[^"]*(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(2), source, count=1)
           gradle.write_text(source)
           PY
       - name: Declare microphone permissions
