@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#123c34">
-<meta name="description" content="مساعد مشرف الصيانة لمتابعة أعطال الصيانة وتقارير الإنتاج وأعمال الشفت في مسالخ الدواجن.">
+<meta name="description" content="مساعد صيانة متخصص لمتابعة الأعطال والتقارير الفنية وتسليم الشفتات في مسالخ الدواجن.">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -61,7 +61,7 @@
   <div class="grid2"><div class="field"><label for="faultDept">التخصص</label><select id="faultDept"><option>ميكانيك</option><option>كهرباء</option><option>مواسير وتمديدات</option><option>عام</option></select></div><div class="field"><label for="faultState">حالة العمل</label><select id="faultState"><option>جديد</option><option>قيد الفحص</option><option>قيد الإصلاح</option><option>تم الإصلاح</option><option>يحتاج متابعة</option><option>بانتظار قطع غيار</option></select></div></div>
   <div class="field"><label for="faultInput">احكِ أو اكتب ما حدث بطريقتك الطبيعية</label><textarea id="faultInput" placeholder="مثال: السير صار يعمل صوت عند الرول، وقفنا الخط وفحصناه ولسه بدنا نتابع السبب..."></textarea></div>
   <div class="actions"><button class="primary mic" id="micBtn">🎙️ ابدأ التسجيل</button><button class="secondary" id="saveFault">＋ حفظ الملاحظة</button><button class="quiet" id="clearFault">مسح النص</button></div>
-  <div class="status" id="faultStatus" role="status"></div><p class="hint">راجع أسماء المعدات والأرقام بعد التسجيل الصوتي. لا يتم افتراض سبب العطل أو نجاح الإصلاح من تلقاء نفسه.</p>
+  <div class="status" id="faultStatus" role="status"></div><p class="hint">اضغط لبدء التسجيل، ثم اضغط الزر نفسه لإيقافه وتحويل كلامك إلى نص. يلزم تسجيل الدخول والسماح باستخدام الميكروفون. راجع أسماء المعدات والأرقام بعد التفريغ.</p>
   <div class="divider"></div><div class="section-head"><h2>صياغة التقرير</h2><span class="pill" id="aiState">صياغة ذكية عبر Groq</span></div>
   <div class="actions"><button class="primary" id="rewriteBtn">✨ صياغة إدارية وفنية</button><button class="secondary" id="technicalBtn">🔎 تحليل فني بالمراجع</button><button class="secondary" id="copyDraftBtn">نسخ الصياغة</button></div>
   <div id="rewriteOutput" class="output" aria-live="polite">أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.</div><div class="divider"></div><h2>التحليل الفني والمراجع</h2><div id="technicalOutput" class="output" aria-live="polite">أدخل وصف الحالة ثم اضغط «تحليل فني بالمراجع» للحصول على تقييم أولي وفحوصات مقترحة ومراجع ذات صلة.</div>
@@ -235,7 +235,7 @@ function bindVoiceButton(buttonId,inputId,statusId){
    return;
   }
   if(activeVoice&&activeVoice.recorder.state==="recording"){
-   try{activeVoice.recorder.stop()}catch(e){}
+   voiceStatus(statusId,"يوجد تسجيل آخر قيد التنفيذ. أوقف التسجيل الحالي أولاً.");return;
   }
   if(!authSession?.access_token){voiceStatus(statusId,"سجّل الدخول أولاً لاستخدام التفريغ الصوتي.");return}
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){voiceStatus(statusId,"التسجيل الصوتي غير مدعوم في هذا المتصفح. استخدم ميكروفون لوحة المفاتيح مؤقتاً.");return}
@@ -246,7 +246,6 @@ function bindVoiceButton(buttonId,inputId,statusId){
    const mimeType=mimeTypes.find(t=>MediaRecorder.isTypeSupported(t));
    const recorder=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
    const chunks=[];
-   const base=inputEl.value;
    activeVoice={button,recorder,stream};
    recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
    recorder.onerror=()=>{
@@ -261,7 +260,7 @@ function bindVoiceButton(buttonId,inputId,statusId){
     if(activeVoice?.recorder===recorder)activeVoice=null;
     button.classList.remove("recording");button.disabled=true;button.textContent="جارٍ تحويل الصوت إلى نص...";
     const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
-    if(blob.size<1200){button.disabled=false;button.textContent=buttonId==="micBtn"?"🎙️ ابدأ التسجيل":"🎙️ وصف الحالة بالصوت";voiceStatus(statusId,"التسجيل قصير جداً أو لم يُلتقط صوت. حاول مرة أخرى.");return}
+    if(blob.size<256){button.disabled=false;button.textContent=buttonId==="micBtn"?"🎙️ ابدأ التسجيل":"🎙️ وصف الحالة بالصوت";voiceStatus(statusId,"التسجيل قصير جداً أو لم يُلتقط صوت. حاول مرة أخرى.");return}
     if(blob.size>24*1024*1024){button.disabled=false;button.textContent=buttonId==="micBtn"?"🎙️ ابدأ التسجيل":"🎙️ وصف الحالة بالصوت";voiceStatus(statusId,"حجم التسجيل كبير. سجّل مقطعاً أقصر.");return}
     voiceStatus(statusId,"تم التسجيل. جارٍ تفريغ كلامك بالعامية إلى نص...");
     try{
@@ -269,7 +268,8 @@ function bindVoiceButton(buttonId,inputId,statusId){
       const form=new FormData();
       const ext=(blob.type.includes("mp4")?"m4a":"webm");
       form.append("audio",blob,"voice."+ext);
-      return fetch(AI_ENDPOINT,{method:"POST",headers:authHeaders(authSession.access_token),body:form});
+      // Do not set Content-Type: the browser must add the multipart boundary.
+      return fetch(AI_ENDPOINT,{method:"POST",headers:{apikey:SUPABASE_KEY,Authorization:"Bearer "+authSession.access_token},body:form});
      };
      let response=await send();
      if(response.status===401&&await refreshSession())response=await send();
@@ -277,7 +277,8 @@ function bindVoiceButton(buttonId,inputId,statusId){
      if(!response.ok)throw new Error(data.error||("تعذر تفريغ الصوت ("+response.status+")"));
      const transcript=typeof data.text==="string"?data.text.trim():"";
      if(!transcript)throw new Error("لم يتم التقاط كلام واضح. حاول التسجيل مرة أخرى.");
-     inputEl.value=base+(base.trim()?" ":"")+transcript;
+     const currentValue=inputEl.value;
+     inputEl.value=currentValue+(currentValue.trim()?" ":"")+transcript;
      voiceStatus(statusId,"تم تحويل كلامك إلى نص. راجعه وعدّل أي كلمة إذا لزم.");
     }catch(error){voiceStatus(statusId,error.message||"تعذر تحويل الصوت إلى نص.")}
     finally{button.disabled=false;button.textContent=buttonId==="micBtn"?"🎙️ ابدأ التسجيل":"🎙️ وصف الحالة بالصوت"}
@@ -335,7 +336,7 @@ $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{typ
 $('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.faults)||!Array.isArray(d.shifts)||!Array.isArray(d.hands)||!Array.isArray(d.parts))throw new Error();if(!Array.isArray(d.productionReports))d.productionReports=[];if(!confirm('سيتم استبدال البيانات الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;db={...blank,...d,settings:{...blank.settings,...(d.settings||{})}};save();render();$('apiEndpoint').value=db.settings.endpoint||'';status('backupStatus','تم استيراد النسخة الاحتياطية.')}catch(e){status('backupStatus','الملف غير صالح أو لا يطابق تنسيق النسخة.')}e.target.value=''};
 $('clearAll').onclick=()=>{if(!$('confirmClear').checked){status('backupStatus','يرجى تأكيد فهمك قبل الحذف.');return}if(confirm('تأكيد نهائي: حذف جميع سجلات الصيانة من هذا الجهاز؟')){db.faults.forEach(x=>markDeleted('maintenance_records',x.id));db.shifts.forEach(x=>markDeleted('shift_reports',x.id));db.hands.forEach(x=>markDeleted('shift_handovers',x.id));db.parts.forEach(x=>markDeleted('spare_parts_requests',x.id));db.productionReports.forEach(x=>markDeleted('production_reports',x.id));db=JSON.parse(JSON.stringify(blank));save();render();status('backupStatus','تم حذف البيانات المحلية. ستُرسل علامات الحذف للسحابة عند توفر الاتصال.')}};
 render();
-if('serviceWorker' in navigator&&location.protocol!=='file:'){
+if(!window.Capacitor?.isNativePlatform?.()&&'serviceWorker' in navigator&&location.protocol!=='file:'){
   window.addEventListener('load',async()=>{
     let hadController=!!navigator.serviceWorker.controller;
     let reloading=false;
