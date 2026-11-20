@@ -17,7 +17,7 @@
 </style>
 </head>
 <body>
-<header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الصيانة والإنتاج وتقارير الشفت في مسالخ الدواجن.</p></div></header>
+<header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الأعطال وأوامر العمل وتقارير الشفت في مسالخ الدواجن.</p></div></header>
 <main class="wrap">
 <style>
 .auth-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
@@ -42,12 +42,12 @@
  <div class="stat"><span>طلبات قطع الغيار</span><strong id="partsCount">0</strong></div>
 </div>
 <nav class="tabs" aria-label="أقسام البرنامج">
- <button class="tab active" data-tab="home">الرئيسية</button><button class="tab" data-tab="faults">الأعطال</button><button class="tab" data-tab="production">تقارير الإنتاج</button><button class="tab" data-tab="shift">تقرير الشفت</button><button class="tab" data-tab="handover">التسليم والاستلام</button><button class="tab" data-tab="parts">قطع الغيار</button><button class="tab" data-tab="settings">الإعدادات</button>
+ <button class="tab active" data-tab="home">الرئيسية</button><button class="tab" data-tab="faults">الأعطال</button><button class="tab hidden" data-tab="production" aria-hidden="true">تقارير الإنتاج</button><button class="tab" data-tab="shift">تقرير الشفت</button><button class="tab" data-tab="handover">التسليم والاستلام</button><button class="tab" data-tab="parts">قطع الغيار</button><button class="tab" data-tab="settings">الإعدادات</button>
 </nav>
 <section id="home" class="view">
  <div class="panel"><div class="section-head"><h2>مساحة العمل اليومية</h2><span class="pill">الشفت المسائي</span></div><div class="tilegrid">
   <button class="tile" data-go="faults"><span class="emoji">🎙️</span><b>تسجيل عطل</b><span>اكتب أو تحدث بطريقتك</span></button>
-  <button class="tile" data-go="production"><span class="emoji">🏭</span><b>تقارير الإنتاج</b><span>الإنتاج ومشاكل خطوط الإنتاج</span></button>
+  <button class="tile hidden" data-go="production" aria-hidden="true"><span class="emoji">🏭</span><b>تقارير الإنتاج</b><span>الإنتاج ومشاكل خطوط الإنتاج</span></button>
   <button class="tile" data-go="shift"><span class="emoji">🧾</span><b>تقرير الشفت</b><span>ملخص الأعمال والملاحظات</span></button>
   <button class="tile" data-go="handover"><span class="emoji">🔁</span><b>تسليم واستلام</b><span>متابعة الأعمال غير المكتملة</span></button>
   <button class="tile" data-go="parts"><span class="emoji">🧰</span><b>طلب قطع غيار</b><span>تسجيل الاحتياجات الفنية</span></button>
@@ -110,7 +110,7 @@
   <div class="divider"></div><label class="checkline"><input type="checkbox" id="confirmClear"> أفهم أن حذف البيانات لا يمكن التراجع عنه دون نسخة احتياطية.</label><button class="danger" id="clearAll">حذف جميع بيانات هذا الجهاز</button>
  </div>
 </section>
-<p class="footer">مساعد مشرف الصيانة • إدارة الأعطال والإنتاج والشفت • مزامنة سحابية ونسخة محلية احتياطية</p>
+<p class="footer">مساعد مشرف الصيانة • إدارة الأعطال والشفت • مزامنة سحابية ونسخة محلية احتياطية</p>
 </main>
 <script>
 (()=>{
