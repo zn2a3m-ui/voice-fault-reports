@@ -212,11 +212,26 @@ $('sendRecoveryBtn').onclick=async()=>{const email=$('recoveryEmail').value.trim
 $('saveNewPasswordBtn').onclick=async()=>{const p=$('newPassword').value,c=$('confirmNewPassword').value;if(!authSession?.access_token||!recoveryMode){cloudMsg('افتح رابط الاستعادة الذي وصلك بالبريد أولاً.','err');return}if(p.length<8){cloudMsg('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','err');return}if(p!==c){cloudMsg('كلمتا المرور غير متطابقتين.','err');return}const b=$('saveNewPasswordBtn');b.disabled=true;b.textContent='جارٍ حفظ كلمة المرور...';try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:authHeaders(authSession.access_token),body:JSON.stringify({password:p})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.msg||d.message||d.error_description||'تعذر تحديث كلمة المرور');recoveryMode=false;$('newPassword').value='';$('confirmNewPassword').value='';history.replaceState(null,document.title,location.pathname+location.search);if(d&&d.id&&authSession)authSession.user=d;localStorage.setItem(AUTH_KEY,JSON.stringify(authSession));showAuth();cloudReady=true;cloudMsg('تم تحديث كلمة المرور بنجاح. يمكنك الآن استخدام التطبيق بكلمة المرور الجديدة.','ok');}catch(e){cloudMsg('لم يتم تغيير كلمة المرور: '+e.message,'err')}finally{b.disabled=false;b.textContent='حفظ كلمة المرور الجديدة'}};
 $('logoutBtn').onclick=async()=>{try{if(authSession?.access_token)await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:authHeaders(authSession.access_token)})}catch(e){}authSession=null;cloudReady=false;recoveryMode=false;localStorage.removeItem(AUTH_KEY);showAuth();cloudMsg('تم تسجيل الخروج. بيانات هذا الجهاز بقيت محفوظة محلياً.')}
 try{authSession=JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch(e){authSession=null}
+async function ensureAppSession(){
+ if(authSession?.access_token){
+  cloudReady=true;
+  if(await refreshSession()){showAuth();syncCloud();return true}
+ }
+ try{
+  cloudMsg('جارٍ تجهيز المساعد الذكي...');
+  const d=await authRequest('signup',{});
+  if(!d?.access_token||!d?.user?.id)throw new Error('لم يتم إنشاء جلسة تشغيل تلقائية');
+  authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));cloudReady=true;showAuth();cloudMsg('المساعد الذكي جاهز.','ok');syncCloud();return true;
+ }catch(e){
+  authSession=null;cloudReady=false;localStorage.removeItem(AUTH_KEY);
+  showAuth();cloudMsg('تعذر تفعيل الجلسة التلقائية. يلزم تفعيل الدخول المجهول مرة واحدة في إعدادات الخدمة.','err');return false;
+ }
+}
 async function acceptRecoveryLink(){const params=new URLSearchParams((location.hash||'').replace(/^#/,''));if(params.get('type')!=='recovery'||!params.get('access_token'))return false;const accessToken=params.get('access_token'),refreshToken=params.get('refresh_token');try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:authHeaders(accessToken)});const user=await r.json().catch(()=>({}));if(!r.ok)throw new Error(user.msg||user.message||'رابط الاستعادة غير صالح أو منتهي الصلاحية');authSession={access_token:accessToken,refresh_token:refreshToken||null,token_type:params.get('token_type')||'bearer',user};localStorage.setItem(AUTH_KEY,JSON.stringify(authSession));recoveryMode=true;cloudReady=false;history.replaceState(null,document.title,location.pathname+location.search);showAuth();cloudMsg('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة.','ok');return true}catch(e){cloudMsg('تعذر التحقق من رابط الاستعادة: '+e.message,'err');return false}}
 showAuth();
 acceptRecoveryLink();
 window.addEventListener('online',()=>{if(cloudReady)syncCloud()});
-if(authSession?.access_token){cloudReady=true;refreshSession().then(ok=>{if(ok){showAuth();syncCloud()}else{cloudReady=false;showAuth();cloudMsg('انتهت الجلسة. سجّل الدخول مجدداً.')}})}
+ensureAppSession();
 
 const stamp=()=>new Intl.DateTimeFormat('ar-JO',{dateStyle:'short',timeStyle:'short'}).format(new Date());
 function go(tab){if(activeVoice&&activeVoice.recorder.state==='recording'&&((activeVoice.button.id==='micBtn'&&tab!=='faults')||(activeVoice.button.id==='prodMic'&&tab!=='production'))){const voice=activeVoice;voice.button.textContent='جارٍ إيقاف التسجيل...';voice.button.classList.remove('recording');try{voice.recorder.stop()}catch(e){voice.stream?.getTracks().forEach(t=>t.stop());if(activeVoice?.recorder===voice.recorder)activeVoice=null}}document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==tab));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));}
