@@ -1,0 +1,11 @@
+{
+  "appId": "com.zn2a3m.maintenancesupervisor",
+  "appName": "مساعد مشرف الصيانة",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
