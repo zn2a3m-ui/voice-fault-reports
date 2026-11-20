@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: maintenance-supervisor-android-build
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
