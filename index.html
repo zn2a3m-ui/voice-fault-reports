@@ -19,6 +19,12 @@
 <body>
 <header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الأعطال وأوامر العمل وتقارير الشفت في مسالخ الدواجن.</p></div></header>
 <main class="wrap">
+<section id="appUpdatePanel" class="panel hidden" style="border-color:#b8d8ca;background:#f1faf5">
+ <div class="section-head"><h2>تحديث التطبيق</h2><span class="pill" id="appUpdateBadge">فحص التحديثات</span></div>
+ <p id="appUpdateMessage" class="muted">سيتم التحقق من وجود إصدار أحدث عند فتح التطبيق.</p>
+ <div class="actions"><button class="primary hidden" id="appUpdateButton" type="button">تنزيل التحديث</button><button class="quiet" id="checkAppUpdateButton" type="button">التحقق مرة أخرى</button></div>
+ <p class="hint">بعد تنزيل ملف التحديث، افتحه ووافق على تثبيته. لا تحذف التطبيق؛ اختر تحديث/تثبيت فوق النسخة الحالية.</p>
+</section>
 <style>
 .auth-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
 .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.auth-panel input{width:100%;border:1px solid #cbd9d3;border-radius:11px;padding:11px;background:#fcfefd}
@@ -376,6 +382,41 @@ function download(name,text){if(!text){alert('لا توجد بيانات للت�
 $('backupBtn').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='نسخة-مساعد-الصيانة.json';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);status('backupStatus','تم تجهيز النسخة الاحتياطية.')};
 $('restoreFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!Array.isArray(d.faults)||!Array.isArray(d.shifts)||!Array.isArray(d.hands)||!Array.isArray(d.parts))throw new Error();if(!Array.isArray(d.productionReports))d.productionReports=[];if(!confirm('سيتم استبدال البيانات الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;db={...blank,...d,settings:{...blank.settings,...(d.settings||{})}};save();render();$('apiEndpoint').value=db.settings.endpoint||'';status('backupStatus','تم استيراد النسخة الاحتياطية.')}catch(e){status('backupStatus','الملف غير صالح أو لا يطابق تنسيق النسخة.')}e.target.value=''};
 $('clearAll').onclick=()=>{if(!$('confirmClear').checked){status('backupStatus','يرجى تأكيد فهمك قبل الحذف.');return}if(confirm('تأكيد نهائي: حذف جميع سجلات الصيانة من هذا الجهاز؟')){db.faults.forEach(x=>markDeleted('maintenance_records',x.id));db.shifts.forEach(x=>markDeleted('shift_reports',x.id));db.hands.forEach(x=>markDeleted('shift_handovers',x.id));db.parts.forEach(x=>markDeleted('spare_parts_requests',x.id));db.productionReports.forEach(x=>markDeleted('production_reports',x.id));db=JSON.parse(JSON.stringify(blank));save();render();status('backupStatus','تم حذف البيانات المحلية. ستُرسل علامات الحذف للسحابة عند توفر الاتصال.')}};
+
+// Android release updater: checks published APK releases without touching local data.
+(function(){
+ const panel=$('appUpdatePanel'),message=$('appUpdateMessage'),badge=$('appUpdateBadge'),downloadBtn=$('appUpdateButton'),checkBtn=$('checkAppUpdateButton');
+ if(!panel||!message||!badge||!downloadBtn||!checkBtn)return;
+ const native=!!window.Capacitor?.isNativePlatform?.();
+ if(!native)return;
+ panel.classList.remove('hidden');
+ const current=Number(window.APP_BUILD_NUMBER||0);
+ const api='https://api.github.com/repos/zn2a3m-ui/voice-fault-reports/releases?per_page=10';
+ let apkUrl='';
+ async function check(){
+  checkBtn.disabled=true;message.textContent='جارٍ البحث عن تحديث جديد...';badge.textContent='جارٍ الفحص';downloadBtn.classList.add('hidden');
+  try{
+   const response=await fetch(api,{headers:{Accept:'application/vnd.github+json'}});
+   if(!response.ok)throw new Error('تعذر فحص التحديثات حالياً.');
+   const releases=await response.json();
+   const release=releases.find(item=>!item.draft&&(item.assets||[]).some(a=>a.name==='app-debug.apk'));
+   if(!release)throw new Error('لم يُنشر إصدار أندرويد جديد بعد.');
+   const match=String(release.tag_name||'').match(/android-v1\.0\.(\d+)/);
+   const latest=match?Number(match[1]):0;
+   const asset=(release.assets||[]).find(a=>a.name==='app-debug.apk');
+   if(!asset||!asset.browser_download_url)throw new Error('ملف التحديث غير متاح حالياً.');
+   if(latest>current){
+    apkUrl=asset.browser_download_url;badge.textContent='تحديث متاح';message.textContent='يتوفر إصدار أحدث ('+release.tag_name+'). اضغط تنزيل التحديث، ثم افتح الملف ووافق على تثبيته.';downloadBtn.classList.remove('hidden');
+   }else{
+    badge.textContent='محدّث';message.textContent='أنت تستخدم أحدث إصدار منشور ('+(window.APP_VERSION||'الحالي')+').';
+   }
+  }catch(error){badge.textContent='تعذر الفحص';message.textContent=error.message||'تعذر التحقق من التحديثات.'}
+  finally{checkBtn.disabled=false}
+ }
+ downloadBtn.addEventListener('click',()=>{if(apkUrl)window.open(apkUrl,'_system')|| (location.href=apkUrl)});
+ checkBtn.addEventListener('click',check);
+ check();
+})();
 render();
 if(!window.Capacitor?.isNativePlatform?.()&&'serviceWorker' in navigator&&location.protocol!=='file:'){
   window.addEventListener('load',async()=>{
