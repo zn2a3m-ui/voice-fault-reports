@@ -108,6 +108,10 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q "com.zn2a3m.maintenancesupervisor"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | grep -q "android.permission.RECORD_AUDIO"
+      - name: Remove superseded APK built with a temporary signing key
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete android-v1.0.14 --yes --cleanup-tag || true
       - name: Publish installable APK release
         uses: softprops/action-gh-release@v2
         with:
