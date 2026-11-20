@@ -111,7 +111,7 @@
 </section>
 <section id="faults" class="view hidden">
  <div class="panel"><div class="section-head"><h2 id="faultTitle">تسجيل عطل أو ملاحظة فنية</h2><span class="pill">إدخال صوتي أو كتابي</span></div>
-  <div class="grid2"><div class="field"><label for="faultDept">التخصص</label><select id="faultDept"><option>ميكانيك</option><option>كهرباء</option><option>مواسير وتمديدات</option><option>عام</option></select></div><div class="field"><label for="faultState">حالة العمل</label><select id="faultState"><option>جديد</option><option>قيد الفحص</option><option>قيد الإصلاح</option><option>تم الإصلاح</option><option>يحتاج متابعة</option><option>بانتظار قطع غيار</option></select></div></div>
+  <div class="grid2"><div class="field"><label for="faultLine">الخط / النطاق</label><select id="faultLine"><option value="line_6000">خط 6000</option><option value="line_4000">خط 4000</option><option value="shared">التقطيع المشترك</option></select></div><div class="field"><label for="faultArea">القسم</label><select id="faultArea"><option value="">اختر القسم</option></select></div></div><div class="field"><label for="faultEquipment">المعدة</label><select id="faultEquipment"><option value="">بدون تحديد معدة حالياً</option></select></div><div class="grid2"><div class="field"><label for="faultDept">التخصص</label><select id="faultDept"><option>ميكانيك</option><option>كهرباء</option><option>مواسير وتمديدات</option><option>عام</option></select></div><div class="field"><label for="faultState">حالة العمل</label><select id="faultState"><option>جديد</option><option>قيد الفحص</option><option>قيد الإصلاح</option><option>تم الإصلاح</option><option>يحتاج متابعة</option><option>بانتظار قطع غيار</option></select></div></div>
   <div class="field"><label for="faultInput">احكِ أو اكتب ما حدث بطريقتك الطبيعية</label><textarea id="faultInput" placeholder="مثال: السير صار يعمل صوت عند الرول، وقفنا الخط وفحصناه ولسه بدنا نتابع السبب..."></textarea></div>
   <div class="actions"><button class="primary mic" id="micBtn">🎙️ ابدأ التسجيل</button><button class="secondary" id="saveFault">＋ حفظ الملاحظة</button><button class="quiet" id="clearFault">مسح النص</button></div>
   <div class="status" id="faultStatus" role="status"></div><p class="hint">اضغط لبدء التسجيل، ثم اضغط الزر نفسه لإيقافه وتحويل كلامك إلى نص. يلزم السماح باستخدام الميكروفون. راجع أسماء المعدات والأرقام بعد التفريغ.</p>
@@ -209,7 +209,7 @@ async function syncCloud(){
  db.parts=db.parts.filter(x=>!tombstones.includes(tombstoneKey('spare_parts_requests',x.id)));
  db.productionReports=db.productionReports.filter(x=>!tombstones.includes(tombstoneKey('production_reports',x.id)));
  for(let i=0;i<tables.length;i++){const ids=tombstones.filter(k=>k.startsWith(tables[i]+':')).map(k=>k.slice(tables[i].length+1));for(const id of ids){if(!remoteDeleted.has(tombstoneKey(tables[i],id)))await rest(tables[i]+'?local_id=eq.'+encodeURIComponent(id)+'&deleted_at=is.null','PATCH',[{deleted_at:new Date().toISOString()}])}}
- const faults=db.faults.filter(f=>!tombstones.includes(tombstoneKey('maintenance_records',f.id))&&shouldUpload(0,f)).map(f=>({user_id:uid,local_id:String(f.id),deleted_at:null,record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:f.updatedAt||f.createdAt||new Date().toISOString()}));
+ const faults=db.faults.filter(f=>!tombstones.includes(tombstoneKey('maintenance_records',f.id))&&shouldUpload(0,f)).map(f=>({user_id:uid,local_id:String(f.id),deleted_at:null,record_type:'fault',title:(f.text||'ملاحظة صيانة').slice(0,100),original_text:f.text||'',polished_text:f.polished||null,department:deptToDb(f.dept),equipment:f.equipmentName||null,line_id:f.lineId||null,department_id:f.departmentId||null,equipment_id:f.equipmentId||null,fault_catalog_id:f.faultCatalogId||null,handover_group_id:f.handoverGroupId||null,status:stateToDb(f.state),priority:'normal',created_at:f.createdAt||new Date().toISOString(),updated_at:f.updatedAt||f.createdAt||new Date().toISOString()}));
  const shifts=db.shifts.filter(x=>!tombstones.includes(tombstoneKey('shift_reports',x.id))&&shouldUpload(1,x)).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:x.updatedAt||x.createdAt||new Date().toISOString(),shift_date:localDate(x.createdAt||x.savedAt),shift_name:x.shift||'المسائي',completed_work:x.done||'',pending_work:x.pending||'',notes:x.notes||''}));
  const hands=db.hands.filter(x=>!tombstones.includes(tombstoneKey('shift_handovers',x.id))&&shouldUpload(2,x)).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:x.updatedAt||x.createdAt||new Date().toISOString(),handover_date:localDate(x.createdAt),from_shift:x.fromShift||'غير محدد',to_shift:x.toShift||'غير محدد',handover_notes:(x.dept||'عام')+' • '+(x.state||'مفتوح للمتابعة')+'\n'+(x.text||'')}));
  const parts=db.parts.filter(x=>!tombstones.includes(tombstoneKey('spare_parts_requests',x.id))&&shouldUpload(3,x)).map(x=>({user_id:uid,local_id:String(x.id),deleted_at:null,updated_at:x.updatedAt||x.createdAt||new Date().toISOString(),created_at:x.createdAt||new Date().toISOString(),item_name:x.name||'قطعة غير محددة',quantity:Math.max(0.001,Number.parseFloat(String(x.qty).replace(',','.'))||1),unit:'قطعة',priority:x.priority==='عاجلة'?'urgent':x.priority==='مهمة'?'high':'normal',reason:(x.dept||'عام')+' • '+(x.reason||''),status:'requested'}));
@@ -227,7 +227,7 @@ async function syncCloud(){
  rest('production_reports?select=*&order=report_date.desc','GET')
  ]);
  const merge=(table,local,remote,convert)=>{const byId=new Map(local.map(x=>[String(x.id),x]));remote.forEach(row=>{if(row.deleted_at&&row.local_id){markDeleted(table,row.local_id);return}if(!row.local_id||tombstones.includes(tombstoneKey(table,row.local_id)))return;const id=String(row.local_id),existing=byId.get(id),incoming=convert(row);if(!existing){local.push(incoming);byId.set(id,incoming);return}const localTime=Date.parse(existing.updatedAt||existing.createdAt||existing.savedAt||0)||0;const remoteTime=Date.parse(row.updated_at||row.created_at||row.shift_date||row.handover_date||row.report_date||0)||0;if(remoteTime>localTime)Object.assign(existing,incoming)})};
- merge('maintenance_records',db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),state:stateFromDb(r.status),createdAt:r.created_at,updatedAt:r.updated_at}));
+ merge('maintenance_records',db.faults,rf,r=>({id:r.local_id,text:r.original_text||r.polished_text||r.title,polished:r.polished_text||'',dept:deptFromDb(r.department),lineId:r.line_id||null,departmentId:r.department_id||null,equipmentId:r.equipment_id||null,faultCatalogId:r.fault_catalog_id||null,handoverGroupId:r.handover_group_id||null,equipmentName:r.equipment||'',state:stateFromDb(r.status),createdAt:r.created_at,updatedAt:r.updated_at}));
  merge('shift_reports',db.shifts,rs,r=>({id:r.local_id,shift:r.shift_name,done:r.completed_work,pending:r.pending_work,notes:r.notes,savedAt:r.shift_date,createdAt:r.created_at||r.shift_date,updatedAt:r.updated_at}));
  merge('shift_handovers',db.hands,rh,r=>{const m=splitMeta(r.handover_notes);return{id:r.local_id,text:m.body,dept:m.dept,state:m.meta||'مفتوح للمتابعة',createdAt:r.created_at||r.handover_date,updatedAt:r.updated_at}});
  merge('spare_parts_requests',db.parts,rp,r=>{const m=splitReason(r.reason);return{id:r.local_id,name:r.item_name,qty:String(r.quantity),dept:m.dept,priority:r.priority==='urgent'?'عاجلة':r.priority==='high'?'مهمة':'عادية',reason:m.reason,status:r.status,createdAt:r.created_at,updatedAt:r.updated_at}});
@@ -301,12 +301,12 @@ $('saveFault').onclick=()=>{
  const polished=lastRewrittenInput===t?$('rewriteOutput').textContent.trim():"";
  let record=db.faults.find(x=>x.id===activeFaultDraftId);
  if(!record||activeFaultDraftText!==t){
-  record={id:uid(),text:t,dept:$('faultDept').value,state:$('faultState').value,createdAt:now,updatedAt:now};
+  record={id:uid(),text:t,dept:$('faultDept').value,state:$('faultState').value,lineId:plantLines.find(x=>x.code===$('faultLine').value)?.id||null,departmentId:$('faultArea').value||null,equipmentId:$('faultEquipment').value||null,equipmentName:plantEquipment.find(x=>x.id===$('faultEquipment').value)?.name||'',createdAt:now,updatedAt:now};
   db.faults.push(record);
   activeFaultDraftId=record.id;
   activeFaultDraftText=t;
  }else{
-  record.dept=$('faultDept').value;record.state=$('faultState').value;record.updatedAt=now;
+  record.dept=$('faultDept').value;record.state=$('faultState').value;record.lineId=plantLines.find(x=>x.code===$('faultLine').value)?.id||null;record.departmentId=$('faultArea').value||null;record.equipmentId=$('faultEquipment').value||null;record.equipmentName=plantEquipment.find(x=>x.id===$('faultEquipment').value)?.name||'';record.updatedAt=now;
  }
  if(polished&&polished!=="أدخل وصف العطل ثم اضغط زر الصياغة للحصول على تقرير عربي منسق.")record.polished=polished;
  save();render();
@@ -335,7 +335,7 @@ async function loadPlant(){
     rest('maintenance_departments?select=*&is_active=eq.true&order=sort_order','GET'),
     rest('maintenance_equipment?select=*&is_active=eq.true&order=name','GET')
    ]);
-   if(lines.length&&depts.length){plantLines=lines;plantDepartments=depts;plantEquipment=equipment;renderPlant();return}
+   if(lines.length&&depts.length){plantLines=lines;plantDepartments=depts;plantEquipment=equipment;renderPlant();fillFaultSelectors();return}
   }
  }catch(e){}
  if(!plantLines.length){
@@ -343,8 +343,20 @@ async function loadPlant(){
   plantDepartments=defaultStructure.flatMap((line,i)=>line.departments.map((name,j)=>({id:'local-dept-'+i+'-'+j,line_id:'local-line-'+i,name,sort_order:j+1})));
  }
  plantEquipment=plantLocal;
- renderPlant();
+ renderPlant();fillFaultSelectors();
 }
+function fillFaultSelectors(){
+ const lineSelect=$('faultLine'),deptSelect=$('faultArea'),equipmentSelect=$('faultEquipment');if(!lineSelect||!deptSelect||!equipmentSelect||!plantLines.length)return;
+ const currentLine=lineSelect.value||'line_6000';lineSelect.innerHTML=plantLines.map(l=>'<option value="'+esc(l.code)+'">'+esc(l.code==='shared'?'التقطيع المشترك':l.name)+'</option>').join('');lineSelect.value=plantLines.some(l=>l.code===currentLine)?currentLine:'line_6000';
+ const selectedLine=plantLines.find(l=>l.code===lineSelect.value);
+ const depts=plantDepartments.filter(d=>d.line_id===selectedLine?.id);
+ const currentDept=deptSelect.value;deptSelect.innerHTML='<option value="">اختر القسم</option>'+depts.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join('');
+ if(depts.some(d=>d.id===currentDept))deptSelect.value=currentDept;
+ const fillEquipment=()=>{const items=plantEquipment.filter(e=>e.department_id===deptSelect.value);equipmentSelect.innerHTML='<option value="">بدون تحديد معدة</option>'+items.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('')};
+ fillEquipment();
+}
+$('faultLine').addEventListener('change',()=>{const l=plantLines.find(x=>x.code===$('faultLine').value);const ds=plantDepartments.filter(d=>d.line_id===l?.id);$('faultArea').innerHTML='<option value="">اختر القسم</option>'+ds.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.name)+'</option>').join('');$('faultEquipment').innerHTML='<option value="">بدون تحديد معدة</option>'});
+$('faultArea').addEventListener('change',()=>{const items=plantEquipment.filter(e=>e.department_id===$('faultArea').value);$('faultEquipment').innerHTML='<option value="">بدون تحديد معدة</option>'+items.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join('')});
 function renderPlant(){
  const lines=$('plantLines');if(!lines)return;
  lines.innerHTML=plantLines.map(line=>'<button class="plant-line '+(line.code==='shared'?'plant-shared':'')+'" data-line="'+esc(line.code)+'"><strong>'+esc(line.name)+'</strong><small>'+(line.code==='shared'?'قسم مشترك':(plantDepartments.filter(d=>d.line_id===line.id).length+' أقسام مستقلة'))+'</small></button>').join('');
@@ -384,6 +396,7 @@ $('saveEquipmentBtn').onclick=async()=>{
  status('equipmentStatusMsg',saved?'تم حفظ المعدة في سجل القسم.':'تم حفظ المعدة محلياً على هذا الجهاز.');
 };
 document.querySelector('[data-tab="plant"]')?.addEventListener('click',()=>loadPlant());
+document.querySelector('[data-tab="faults"]')?.addEventListener('click',()=>loadPlant());
 
 let activeVoice=null,voiceStopTimer=null;
 function voiceStatus(id,message){status(id,message)}
