@@ -29,6 +29,8 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Verify application JavaScript
+        run: npm run check
       - name: Prepare application assets
         run: npm run build:web
       - name: Generate native Android project
