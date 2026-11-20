@@ -40,7 +40,7 @@
  <p class="hint">بعد تنزيل ملف التحديث، افتحه ووافق على تثبيته. لا تحذف التطبيق؛ اختر تحديث/تثبيت فوق النسخة الحالية.</p>
 </section>
 <style>
-.auth-panel{display:none!important;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
+.auth-panel{display:block!important;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 4px 16px #173c300a}
 .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.auth-panel input{width:100%;border:1px solid #cbd9d3;border-radius:11px;padding:11px;background:#fcfefd}
 .cloud-state{font-size:12px;color:var(--muted);margin-top:7px}.cloud-state.ok{color:var(--green)}.cloud-state.err{color:var(--red)}
 </style>
@@ -49,7 +49,7 @@
  <div id="authForm">
   <div class="auth-grid"><input id="authEmail" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
   <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button><button class="quiet" id="forgotPasswordBtn" type="button">نسيت كلمة المرور؟</button></div>
-  <p class="hint">الدخول مخصص لحساب المالك. استخدم البريد الإلكتروني وكلمة المرور المسجلين مسبقاً.</p>
+  <p class="hint">سجّل الدخول بحساب الصيانة نفسه المستخدم في النسخة السابقة. يلزم تسجيل الدخول على هذا الجهاز لتفعيل التسجيل الصوتي والصياغة الذكية والمزامنة. إذا نسيت كلمة المرور استخدم رابط الاستعادة.</p>
  </div>
  <div id="recoveryRequest" class="hidden">
   <div class="field"><label for="recoveryEmail">البريد الإلكتروني لاستلام رابط الاستعادة</label><input id="recoveryEmail" type="email" autocomplete="email" placeholder="أدخل بريد حسابك"></div>
@@ -261,7 +261,7 @@ async function ensureAppSession(){
   authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));cloudReady=true;showAuth();cloudMsg('المساعد الذكي جاهز.','ok');syncCloud();return true;
  }catch(e){
   authSession=null;cloudReady=false;localStorage.removeItem(AUTH_KEY);
-  showAuth();cloudMsg('تعذر تفعيل الجلسة التلقائية. يلزم تفعيل الدخول المجهول مرة واحدة في إعدادات الخدمة.','err');return false;
+  showAuth();cloudMsg('الجلسة التلقائية غير مفعّلة. سجّل الدخول بحساب الصيانة من المربع أعلاه لتشغيل التسجيل الصوتي والصياغة الذكية والمزامنة.','err');return false;
  }
 }
 async function acceptRecoveryLink(){const params=new URLSearchParams((location.hash||'').replace(/^#/,''));if(params.get('type')!=='recovery'||!params.get('access_token'))return false;const accessToken=params.get('access_token'),refreshToken=params.get('refresh_token');try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:authHeaders(accessToken)});const user=await r.json().catch(()=>({}));if(!r.ok)throw new Error(user.msg||user.message||'رابط الاستعادة غير صالح أو منتهي الصلاحية');authSession={access_token:accessToken,refresh_token:refreshToken||null,token_type:params.get('token_type')||'bearer',user};localStorage.setItem(AUTH_KEY,JSON.stringify(authSession));recoveryMode=true;cloudReady=false;history.replaceState(null,document.title,location.pathname+location.search);showAuth();cloudMsg('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة.','ok');return true}catch(e){cloudMsg('تعذر التحقق من رابط الاستعادة: '+e.message,'err');return false}}
