@@ -14,6 +14,20 @@
 :root{color-scheme:light;--ink:#17352e;--muted:#71827c;--green:#176b58;--green2:#e6f2ed;--line:#dfe9e4;--paper:#fff;--bg:#f3f7f5;--red:#a63b35;--amber:#946315;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.65}button,input,select,textarea{font:inherit}header{background:linear-gradient(135deg,#102f2b,#1b6655);color:#fff;padding:22px 17px 25px;border-radius:0 0 25px 25px}.head,.wrap{max-width:900px;margin:auto}.eyebrow{font-size:12px;color:#c8e2d8;margin:0 0 4px}h1{font-size:24px;line-height:1.3;margin:0 0 6px}header p{font-size:13px;color:#d9eae4;margin:0}.wrap{padding:15px 13px 28px}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:13px}.stat,.panel,.tile{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 16px #173c300a}.stat{padding:11px 13px}.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{font-size:21px}.tabs{display:flex;gap:7px;overflow:auto;padding:2px 1px 10px;margin-bottom:4px}.tab{white-space:nowrap;background:#e8efeb;color:#39574d;padding:9px 13px;border-radius:11px;font-size:13px}.tab.active{background:var(--green);color:#fff}.panel{padding:15px;margin-bottom:12px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}h2{font-size:16px;margin:0}.muted{color:var(--muted);font-size:12px}.pill{font-size:11px;color:var(--green);background:var(--green2);padding:4px 9px;border-radius:30px;white-space:nowrap}.field{margin:10px 0}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field input,.field select,.field textarea,textarea{width:100%;border:1px solid #cbd9d3;border-radius:12px;padding:11px;background:#fcfefd;color:var(--ink);outline:none}.field textarea,textarea{min-height:116px;line-height:1.9;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px #176b5815}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}button{border:0;border-radius:11px;padding:10px 13px;font-size:13px;font-weight:700;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--green);color:#fff}.secondary{background:var(--green2);color:#185443}.quiet{background:#eff3f1;color:#50615b}.danger{background:#fff0ef;color:var(--red)}.warning{background:#fff6e5;color:var(--amber)}.mic.recording{background:var(--red);color:#fff}.status{min-height:21px;margin-top:8px;color:var(--green);font-size:12px}.hint{font-size:11px;color:var(--muted);margin:7px 0 0}.hidden{display:none!important}.cards{display:grid;gap:9px}.item{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.item-top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}.item h3{font-size:13px;margin:0;color:var(--green)}.item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}.tag{font-size:10px;padding:3px 8px;border-radius:20px;background:#eef3f0;color:#53675e}.empty{text-align:center;color:var(--muted);padding:20px 8px;font-size:13px}.divider{height:1px;background:var(--line);margin:13px 0}.tilegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.tile{padding:13px;text-align:right;cursor:pointer}.tile b{display:block;font-size:13px;margin:4px 0}.tile span{font-size:11px;color:var(--muted)}.tile .emoji{font-size:21px}.output{background:#f7faf8;border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;line-height:1.9;font-size:13px;min-height:60px}.footer{text-align:center;color:#87958f;font-size:11px;padding:7px}.checkline{display:flex;align-items:center;gap:7px;font-size:12px;margin:8px 0}.checkline input{width:auto}.notice{border:1px solid #eadcb9;background:#fff9eb;border-radius:12px;padding:11px;font-size:12px;color:#72531c;line-height:1.8}
 @media(min-width:620px){.stats{grid-template-columns:repeat(4,1fr)}.tilegrid{grid-template-columns:repeat(3,1fr)}.wrap{padding-left:18px;padding-right:18px}}
+
+.plant-lines{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plant-line{border:1px solid var(--line);border-radius:15px;background:#fff;padding:14px;text-align:right;min-height:108px}
+.plant-line strong{display:block;font-size:18px;color:var(--green)}
+.plant-line small{color:var(--muted)}
+.plant-shared{grid-column:1/-1;background:#f0f7f3;border-color:#c9dfd4}
+.dept-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dept-card{border:1px solid var(--line);background:#fff;border-radius:13px;padding:13px;text-align:right}
+.dept-card b{display:block;font-size:14px}.dept-card span{font-size:11px;color:var(--muted)}
+.equipment-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;margin:8px 0}
+.equipment-card strong{display:block;font-size:13px}.equipment-card small{color:var(--muted);font-size:11px}
+.plant-back{background:#eef3f0;color:#34574b}
+@media(max-width:420px){.plant-lines,.dept-grid{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -59,8 +73,30 @@
  <div class="stat"><span>طلبات قطع الغيار</span><strong id="partsCount">0</strong></div>
 </div>
 <nav class="tabs" aria-label="أقسام البرنامج">
- <button class="tab active" data-tab="home">الرئيسية</button><button class="tab" data-tab="faults">الأعطال</button><button class="tab hidden" data-tab="production" aria-hidden="true">تقارير الإنتاج</button><button class="tab" data-tab="shift">تقرير الشفت</button><button class="tab" data-tab="handover">التسليم والاستلام</button><button class="tab" data-tab="parts">قطع الغيار</button><button class="tab" data-tab="settings">الإعدادات</button>
+ <button class="tab active" data-tab="home">الرئيسية</button><button class="tab" data-tab="plant">المسلخ والمعدات</button><button class="tab" data-tab="faults">الأعطال</button><button class="tab hidden" data-tab="production" aria-hidden="true">تقارير الإنتاج</button><button class="tab" data-tab="shift">تقرير الشفت</button><button class="tab" data-tab="handover">التسليم والاستلام</button><button class="tab" data-tab="parts">قطع الغيار</button><button class="tab" data-tab="settings">الإعدادات</button>
 </nav>
+
+<section id="plant" class="view hidden">
+ <div class="panel">
+  <div class="section-head"><div><h2 id="plantHeading">هيكل المسلخ</h2><p class="muted" id="plantSubheading">اختر الخط لعرض أقسامه ومعداته</p></div><span class="pill">الهيكل المعتمد</span></div>
+  <div id="plantLines" class="plant-lines">
+   <button class="plant-line" data-line="line_6000"><strong>خط 6000</strong><small>4 أقسام مستقلة</small></button>
+   <button class="plant-line" data-line="line_4000"><strong>خط 4000</strong><small>4 أقسام مستقلة</small></button>
+   <button class="plant-line plant-shared" data-line="shared"><strong>قسم التقطيع المشترك</strong><small>يخدم الخطين</small></button>
+  </div>
+  <div id="plantDepartments" class="hidden"><div class="actions"><button class="plant-back" id="plantBackLines">← كل الخطوط</button></div><div id="plantDeptGrid" class="dept-grid"></div></div>
+  <div id="plantEquipment" class="hidden"><div class="actions"><button class="plant-back" id="plantBackDepartments">← الأقسام</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div>
+   <div id="equipmentForm" class="panel hidden" style="margin-top:12px">
+    <h2>إضافة معدة للقسم</h2>
+    <div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div>
+    <div class="grid2"><div class="field"><label for="equipmentCode">الرقم / الكود (اختياري)</label><input id="equipmentCode" placeholder="مثال: M-01"></div><div class="field"><label for="equipmentStatus">حالة المعدة</label><select id="equipmentStatus"><option value="operational">تعمل</option><option value="fault">عليها عطل</option><option value="maintenance">تحت الصيانة</option><option value="stopped">متوقفة</option></select></div></div>
+    <div class="field"><label for="equipmentNotes">ملاحظات (اختياري)</label><textarea id="equipmentNotes" rows="2" placeholder="معلومات تساعد في تمييز المعدة"></textarea></div>
+    <div class="actions"><button class="primary" id="saveEquipmentBtn">حفظ المعدة</button><button class="quiet" id="cancelEquipmentBtn">إلغاء</button></div><p class="status" id="equipmentStatusMsg"></p>
+   </div>
+  </div>
+ </div>
+</section>
+
 <section id="home" class="view">
  <div class="panel"><div class="section-head"><h2>مساحة العمل اليومية</h2><span class="pill">الشفت المسائي</span></div><div class="tilegrid">
   <button class="tile" data-go="faults"><span class="emoji">🎙️</span><b>تسجيل عطل</b><span>اكتب أو تحدث بطريقتك</span></button>
@@ -280,6 +316,75 @@ $('clearFault').onclick=()=>{$('faultInput').value='';activeFaultDraftId=null;ac
 $('copyFaults').onclick=()=>copy(db.faults.filter(f=>['ميكانيك','كهرباء','مواسير وتمديدات'].includes(f.dept)).map(f=>f.text).filter(Boolean).join('\n\n'));
 $('shareFaults').onclick=async()=>{const t=faultTextOnly();if(!t){status('faultShareStatus','لا توجد أعطال لعرضها.');return}try{if(navigator.share)await navigator.share({title:'ملاحظات الصيانة',text:t});else await copy(t)}catch(e){}};
 $('exportFaults').onclick=()=>download('ملاحظات-الصيانة.txt',faultTextOnly());
+
+const STRUCTURE_KEY='maintenanceStructure.v1';
+const defaultStructure=[
+ {code:'line_6000',name:'خط 6000',capacity:6000,departments:['الوصول','الذبح','الأحشاء','التغليف']},
+ {code:'line_4000',name:'خط 4000',capacity:4000,departments:['الوصول','الذبح','الأحشاء','التغليف']},
+ {code:'shared',name:'مشترك',capacity:null,departments:['التقطيع']}
+];
+let plantLines=[],plantDepartments=[],plantEquipment=[],plantLocal=[];
+let selectedPlantLine=null,selectedPlantDepartment=null;
+try{plantLocal=JSON.parse(localStorage.getItem(STRUCTURE_KEY)||'[]');if(!Array.isArray(plantLocal))plantLocal=[]}catch(e){plantLocal=[]}
+const statusLabel=v=>({operational:'تعمل',fault:'عليها عطل',maintenance:'تحت الصيانة',stopped:'متوقفة',inactive:'غير نشطة'}[v]||'تعمل');
+async function loadPlant(){
+ try{
+  if(authSession?.access_token){
+   const [lines,depts,equipment]=await Promise.all([
+    rest('maintenance_lines?select=*&is_active=eq.true','GET'),
+    rest('maintenance_departments?select=*&is_active=eq.true&order=sort_order','GET'),
+    rest('maintenance_equipment?select=*&is_active=eq.true&order=name','GET')
+   ]);
+   if(lines.length&&depts.length){plantLines=lines;plantDepartments=depts;plantEquipment=equipment;renderPlant();return}
+  }
+ }catch(e){}
+ if(!plantLines.length){
+  plantLines=defaultStructure.map((x,i)=>({id:'local-line-'+i,code:x.code,name:x.name,capacity:x.capacity}));
+  plantDepartments=defaultStructure.flatMap((line,i)=>line.departments.map((name,j)=>({id:'local-dept-'+i+'-'+j,line_id:'local-line-'+i,name,sort_order:j+1})));
+ }
+ plantEquipment=plantLocal;
+ renderPlant();
+}
+function renderPlant(){
+ const lines=$('plantLines');if(!lines)return;
+ lines.innerHTML=plantLines.map(line=>'<button class="plant-line '+(line.code==='shared'?'plant-shared':'')+'" data-line="'+esc(line.code)+'"><strong>'+esc(line.name)+'</strong><small>'+(line.code==='shared'?'قسم مشترك':(plantDepartments.filter(d=>d.line_id===line.id).length+' أقسام مستقلة'))+'</small></button>').join('');
+ lines.querySelectorAll('[data-line]').forEach(b=>b.onclick=()=>openPlantLine(b.dataset.line));
+}
+function openPlantLine(code){
+ selectedPlantLine=plantLines.find(x=>x.code===code);if(!selectedPlantLine)return;
+ $('plantLines').classList.add('hidden');$('plantDepartments').classList.remove('hidden');$('plantEquipment').classList.add('hidden');
+ $('plantHeading').textContent=selectedPlantLine.name;$('plantSubheading').textContent=code==='shared'?'قسم مشترك بين الخطين':'اختر القسم لعرض معداته';
+ const depts=plantDepartments.filter(d=>d.line_id===selectedPlantLine.id);
+ $('plantDeptGrid').innerHTML=depts.map(d=>'<button class="dept-card" data-dept="'+esc(d.id)+'"><b>'+esc(d.name)+'</b><span>'+plantEquipment.filter(e=>e.department_id===d.id).length+' معدات مسجلة</span></button>').join('');
+ $('plantDeptGrid').querySelectorAll('[data-dept]').forEach(b=>b.onclick=()=>openPlantDepartment(b.dataset.dept));
+}
+function openPlantDepartment(id){
+ selectedPlantDepartment=plantDepartments.find(d=>d.id===id);if(!selectedPlantDepartment)return;
+ $('plantDepartments').classList.add('hidden');$('plantEquipment').classList.remove('hidden');
+ $('plantHeading').textContent=selectedPlantDepartment.name;$('plantSubheading').textContent=selectedPlantLine.name+' • قائمة المعدات';
+ $('equipmentForm').classList.add('hidden');renderEquipment();
+}
+function renderEquipment(){
+ const list=plantEquipment.filter(e=>e.department_id===selectedPlantDepartment?.id);
+ $('equipmentList').innerHTML=list.length?list.map(e=>'<div class="equipment-card"><div><strong>'+esc(e.name)+'</strong><small>'+(e.asset_code?esc(e.asset_code)+' • ':'')+statusLabel(e.status)+'</small></div><span class="pill">'+(e.status==='operational'?'عاملة':e.status==='fault'?'عطل':'متابعة')+'</span></div>').join(''):'<div class="empty">لا توجد معدات مسجلة هنا بعد. أضف أول معدة لهذا القسم.</div>';
+}
+$('plantBackLines').onclick=()=>{$('plantDepartments').classList.add('hidden');$('plantLines').classList.remove('hidden');$('plantHeading').textContent='هيكل المسلخ';$('plantSubheading').textContent='اختر الخط لعرض أقسامه ومعداته'};
+$('plantBackDepartments').onclick=()=>{$('plantEquipment').classList.add('hidden');$('plantDepartments').classList.remove('hidden');$('plantHeading').textContent=selectedPlantLine?.name||'الأقسام';$('plantSubheading').textContent='اختر القسم لعرض معداته'};
+$('addEquipmentBtn').onclick=()=>{$('equipmentForm').classList.remove('hidden');$('equipmentName').focus()};
+$('cancelEquipmentBtn').onclick=()=>$('equipmentForm').classList.add('hidden');
+$('saveEquipmentBtn').onclick=async()=>{
+ const name=$('equipmentName').value.trim();if(!name){status('equipmentStatusMsg','اكتب اسم المعدة أولاً.');return}
+ const item={id:uid(),department_id:selectedPlantDepartment.id,name,asset_code:$('equipmentCode').value.trim()||null,status:$('equipmentStatus').value,notes:$('equipmentNotes').value.trim(),is_active:true,created_at:new Date().toISOString()};
+ let saved=false;
+ if(authSession?.access_token&&cloudReady){
+  try{await rest('maintenance_equipment','POST',[{user_id:authSession.user.id,department_id:item.department_id,name:item.name,asset_code:item.asset_code,status:item.status,notes:item.notes,is_active:true}]);saved=true;await loadPlant();openPlantLine(selectedPlantLine.code);openPlantDepartment(selectedPlantDepartment.id)}catch(e){status('equipmentStatusMsg','تعذر حفظها سحابياً؛ حُفظت على هذا الجهاز فقط.')}
+ }
+ if(!saved){plantLocal.push(item);localStorage.setItem(STRUCTURE_KEY,JSON.stringify(plantLocal));plantEquipment=plantLocal;renderPlant();renderEquipment()}
+ $('equipmentName').value='';$('equipmentCode').value='';$('equipmentNotes').value='';$('equipmentForm').classList.add('hidden');
+ status('equipmentStatusMsg',saved?'تم حفظ المعدة في سجل القسم.':'تم حفظ المعدة محلياً على هذا الجهاز.');
+};
+document.querySelector('[data-tab="plant"]')?.addEventListener('click',()=>loadPlant());
+
 let activeVoice=null,voiceStopTimer=null;
 function voiceStatus(id,message){status(id,message)}
 function bindVoiceButton(buttonId,inputId,statusId){
