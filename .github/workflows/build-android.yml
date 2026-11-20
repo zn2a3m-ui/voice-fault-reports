@@ -102,6 +102,12 @@ jobs:
       - name: Build installable debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+      - name: Verify APK identity and microphone permission
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q "com.zn2a3m.maintenancesupervisor"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | grep -q "android.permission.RECORD_AUDIO"
       - name: Publish installable APK release
         uses: softprops/action-gh-release@v2
         with:
