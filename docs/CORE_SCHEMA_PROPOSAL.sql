@@ -146,10 +146,15 @@ create policy "Users manage their maintenance work orders"
   with check ((select auth.uid()) = user_id);
 
 drop policy if exists "Users manage their maintenance work order events" on public.maintenance_work_order_events;
-create policy "Users manage their maintenance work order events"
-  on public.maintenance_work_order_events for all to authenticated
-  using ((select auth.uid()) = user_id)
+drop policy if exists "Users read their maintenance work order events" on public.maintenance_work_order_events;
+drop policy if exists "Users append their maintenance work order events" on public.maintenance_work_order_events;
+create policy "Users read their maintenance work order events"
+  on public.maintenance_work_order_events for select to authenticated
+  using ((select auth.uid()) = user_id);
+create policy "Users append their maintenance work order events"
+  on public.maintenance_work_order_events for insert to authenticated
   with check ((select auth.uid()) = user_id);
+-- Deliberately no UPDATE or DELETE policy: event history is append-only.
 
 drop policy if exists "Users manage their maintenance handover batches" on public.maintenance_handover_batches;
 create policy "Users manage their maintenance handover batches"
