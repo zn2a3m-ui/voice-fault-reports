@@ -1,0 +1,31 @@
+name: Keep Android update signing key available
+
+on:
+  schedule:
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-signing-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Restore stable Android debug signing key
+        uses: actions/cache@v4
+        id: debug-keystore
+        with:
+          path: ~/.android/debug.keystore
+          key: maintenance-supervisor-debug-keystore-v1
+          save-always: true
+      - name: Create key only if cache is missing
+        if: steps.debug-keystore.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
