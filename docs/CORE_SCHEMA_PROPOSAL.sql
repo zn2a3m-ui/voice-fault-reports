@@ -4,6 +4,10 @@
 
 begin;
 
+-- Composite uniqueness lets future work orders reference only legacy rows owned by the same user.
+create unique index if not exists maintenance_records_id_user_uidx
+  on public.maintenance_records(id, user_id);
+
 create table if not exists public.maintenance_assets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete restrict,
@@ -31,7 +35,7 @@ create table if not exists public.maintenance_work_orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete restrict,
   work_order_no bigint generated always as identity,
-  legacy_record_id uuid references public.maintenance_records(id) on delete set null,
+  legacy_record_id uuid,
   asset_id uuid,
   order_type text not null default 'corrective'
     check (order_type in ('corrective','preventive','inspection')),
@@ -56,6 +60,10 @@ create table if not exists public.maintenance_work_orders (
   constraint maintenance_work_orders_asset_owner_fk
     foreign key (asset_id, user_id)
     references public.maintenance_assets(id, user_id)
+    on delete restrict,
+  constraint maintenance_work_orders_legacy_owner_fk
+    foreign key (legacy_record_id, user_id)
+    references public.maintenance_records(id, user_id)
     on delete restrict
 );
 
