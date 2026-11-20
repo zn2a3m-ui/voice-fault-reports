@@ -4,7 +4,8 @@
   "private": true,
   "description": "Android wrapper for Maintenance Supervisor",
   "scripts": {
-    "build:web": "node scripts/build-web.mjs"
+    "build:web": "node scripts/build-web.mjs",
+    "check": "node scripts/check-inline-js.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.2"
