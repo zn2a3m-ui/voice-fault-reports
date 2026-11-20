@@ -28,8 +28,19 @@
  <div class="section-head"><h2>الدخول الآمن والمزامنة السحابية</h2><span class="pill">حسابك الخاص</span></div>
  <div id="authForm">
   <div class="auth-grid"><input id="authEmail" type="email" autocomplete="username" placeholder="البريد الإلكتروني"><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
-  <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button></div>
+  <div class="actions"><button class="primary" id="loginBtn">تسجيل الدخول</button><button class="quiet" id="forgotPasswordBtn" type="button">نسيت كلمة المرور؟</button></div>
   <p class="hint">الدخول مخصص لحساب المالك. استخدم البريد الإلكتروني وكلمة المرور المسجلين مسبقاً.</p>
+ </div>
+ <div id="recoveryRequest" class="hidden">
+  <div class="field"><label for="recoveryEmail">البريد الإلكتروني لاستلام رابط الاستعادة</label><input id="recoveryEmail" type="email" autocomplete="email" placeholder="أدخل بريد حسابك"></div>
+  <div class="actions"><button class="primary" id="sendRecoveryBtn" type="button">إرسال رابط الاستعادة</button><button class="quiet" id="cancelRecoveryBtn" type="button">رجوع</button></div>
+  <p class="hint">سنرسل رابطاً إلى البريد. افتحه من نفس الجهاز أو المتصفح لإدخال كلمة مرور جديدة.</p>
+ </div>
+ <div id="recoveryPasswordForm" class="hidden">
+  <div class="field"><label for="newPassword">كلمة المرور الجديدة</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="8 أحرف على الأقل"></div>
+  <div class="field"><label for="confirmNewPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="أعد كتابة كلمة المرور"></div>
+  <div class="actions"><button class="primary" id="saveNewPasswordBtn" type="button">حفظ كلمة المرور الجديدة</button></div>
+  <p class="hint">لن تتغير كلمة المرور إلا بعد فتح رابط الاستعادة الصحيح وإتمام الحفظ هنا.</p>
  </div>
  <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div>
  <div id="cloudStatus" class="cloud-state" role="status">البيانات محفوظة محلياً إلى أن تسجل الدخول.</div>
@@ -185,12 +196,19 @@ async function syncCloud(){
 }
 function deleteCloud(table,id){markDeleted(table,id);if(cloudReady)syncCloud()}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));renderStats();if(cloudReady)syncCloud()}catch(e){alert('تعذر حفظ البيانات. يرجى تنزيل نسخة احتياطية.')}};
-function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes);$('authSigned').classList.toggle('hidden',!yes);if(yes)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
+let recoveryMode=false;
+function showAuth(){const yes=!!authSession?.access_token;$('authForm').classList.toggle('hidden',yes||recoveryMode);$('authSigned').classList.toggle('hidden',!yes||recoveryMode);$('recoveryRequest').classList.add('hidden');$('recoveryPasswordForm').classList.toggle('hidden',!recoveryMode);if(yes&&!recoveryMode)$('signedEmail').textContent='تم تسجيل الدخول: '+(authSession.user?.email||'حسابك');}
 async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){cloudMsg('أدخل البريد الإلكتروني وكلمة المرور.','err');return}try{cloudMsg('جارٍ تسجيل الدخول...');const d=await authRequest('token?grant_type=password',{email,password});authSession=d;localStorage.setItem(AUTH_KEY,JSON.stringify(d));showAuth();cloudReady=true;await syncCloud()}catch(e){cloudMsg(e.message,'err')}}
 $('loginBtn').onclick=()=>signIn();$('syncBtn').onclick=()=>syncCloud();
-$('logoutBtn').onclick=async()=>{try{if(authSession?.access_token)await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:authHeaders(authSession.access_token)})}catch(e){}authSession=null;cloudReady=false;localStorage.removeItem(AUTH_KEY);showAuth();cloudMsg('تم تسجيل الخروج. بيانات هذا الجهاز بقيت محفوظة محلياً.')}
+$('forgotPasswordBtn').onclick=()=>{$('authForm').classList.add('hidden');$('recoveryRequest').classList.remove('hidden');$('recoveryEmail').value=$('authEmail').value.trim();cloudMsg('أدخل بريد حسابك لإرسال رابط الاستعادة.');};
+$('cancelRecoveryBtn').onclick=()=>{$('recoveryRequest').classList.add('hidden');$('authForm').classList.remove('hidden');};
+$('sendRecoveryBtn').onclick=async()=>{const email=$('recoveryEmail').value.trim();if(!email){cloudMsg('أدخل البريد الإلكتروني أولاً.','err');return}const b=$('sendRecoveryBtn');b.disabled=true;b.textContent='جارٍ إرسال الطلب...';try{const redirectTo='https://zn2a3m-ui.github.io/voice-fault-reports/';await authRequest('recover?redirect_to='+encodeURIComponent(redirectTo),{email});cloudMsg('إذا كان البريد مرتبطاً بحساب، فسيصلك رابط استعادة. افحص الوارد والرسائل غير المرغوب فيها.','ok');}catch(e){cloudMsg('تعذر إرسال طلب الاستعادة: '+e.message,'err')}finally{b.disabled=false;b.textContent='إرسال رابط الاستعادة'}};
+$('saveNewPasswordBtn').onclick=async()=>{const p=$('newPassword').value,c=$('confirmNewPassword').value;if(!authSession?.access_token||!recoveryMode){cloudMsg('افتح رابط الاستعادة الذي وصلك بالبريد أولاً.','err');return}if(p.length<8){cloudMsg('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','err');return}if(p!==c){cloudMsg('كلمتا المرور غير متطابقتين.','err');return}const b=$('saveNewPasswordBtn');b.disabled=true;b.textContent='جارٍ حفظ كلمة المرور...';try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:authHeaders(authSession.access_token),body:JSON.stringify({password:p})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.msg||d.message||d.error_description||'تعذر تحديث كلمة المرور');recoveryMode=false;$('newPassword').value='';$('confirmNewPassword').value='';history.replaceState(null,document.title,location.pathname+location.search);if(d&&d.id&&authSession)authSession.user=d;localStorage.setItem(AUTH_KEY,JSON.stringify(authSession));showAuth();cloudReady=true;cloudMsg('تم تحديث كلمة المرور بنجاح. يمكنك الآن استخدام التطبيق بكلمة المرور الجديدة.','ok');}catch(e){cloudMsg('لم يتم تغيير كلمة المرور: '+e.message,'err')}finally{b.disabled=false;b.textContent='حفظ كلمة المرور الجديدة'}};
+$('logoutBtn').onclick=async()=>{try{if(authSession?.access_token)await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:authHeaders(authSession.access_token)})}catch(e){}authSession=null;cloudReady=false;recoveryMode=false;localStorage.removeItem(AUTH_KEY);showAuth();cloudMsg('تم تسجيل الخروج. بيانات هذا الجهاز بقيت محفوظة محلياً.')}
 try{authSession=JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch(e){authSession=null}
+async function acceptRecoveryLink(){const params=new URLSearchParams((location.hash||'').replace(/^#/,''));if(params.get('type')!=='recovery'||!params.get('access_token'))return false;const accessToken=params.get('access_token'),refreshToken=params.get('refresh_token');try{const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:authHeaders(accessToken)});const user=await r.json().catch(()=>({}));if(!r.ok)throw new Error(user.msg||user.message||'رابط الاستعادة غير صالح أو منتهي الصلاحية');authSession={access_token:accessToken,refresh_token:refreshToken||null,token_type:params.get('token_type')||'bearer',user};localStorage.setItem(AUTH_KEY,JSON.stringify(authSession));recoveryMode=true;cloudReady=false;history.replaceState(null,document.title,location.pathname+location.search);showAuth();cloudMsg('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة.','ok');return true}catch(e){cloudMsg('تعذر التحقق من رابط الاستعادة: '+e.message,'err');return false}}
 showAuth();
+acceptRecoveryLink();
 window.addEventListener('online',()=>{if(cloudReady)syncCloud()});
 if(authSession?.access_token){cloudReady=true;refreshSession().then(ok=>{if(ok){showAuth();syncCloud()}else{cloudReady=false;showAuth();cloudMsg('انتهت الجلسة. سجّل الدخول مجدداً.')}})}
 
