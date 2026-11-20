@@ -69,6 +69,12 @@ jobs:
         run: |
           mkdir -p "$HOME/.android"
           keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+      - name: Force the cached signing key for this app
+        run: |
+          mkdir -p android/app
+          cp "$HOME/.android/debug.keystore" android/app/debug.keystore
+          echo "Cached signing certificate:"
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep -E "SHA256:|SHA1:"
       - name: Set increasing Android version code
         env:
           BUILD_NUMBER: ${{ github.run_number }}
