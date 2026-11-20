@@ -61,6 +61,14 @@ create index if not exists maintenance_equipment_user_department_idx on public.m
 create index if not exists maintenance_fault_catalog_user_department_idx on public.maintenance_fault_catalog(user_id,department_id,is_active);
 create index if not exists maintenance_records_equipment_created_idx on public.maintenance_records(user_id,equipment_id,created_at desc);
 create index if not exists maintenance_records_handover_group_idx on public.maintenance_records(user_id,handover_group_id);
+create index if not exists maintenance_departments_line_id_idx on public.maintenance_departments(line_id);
+create index if not exists maintenance_equipment_department_id_idx on public.maintenance_equipment(department_id);
+create index if not exists maintenance_fault_catalog_department_id_idx on public.maintenance_fault_catalog(department_id);
+create index if not exists maintenance_fault_catalog_equipment_id_idx on public.maintenance_fault_catalog(equipment_id);
+create index if not exists maintenance_records_line_id_idx on public.maintenance_records(line_id);
+create index if not exists maintenance_records_department_id_idx on public.maintenance_records(department_id);
+create index if not exists maintenance_records_equipment_id_idx on public.maintenance_records(equipment_id);
+create index if not exists maintenance_records_fault_catalog_id_idx on public.maintenance_records(fault_catalog_id);
 do $$
 declare t text;
 begin
