@@ -128,7 +128,7 @@ button.secondary{background:#e8f5f2;color:#076b60;font-weight:700;border-radius:
  <div class="section-head"><div><h3>بلاغات النتافات</h3><p class="muted">اختَر التفاصيل وسيظهر الوصف جاهزاً للنسخ والإرسال.</p></div><span class="pill">بلاغ سريع</span></div>
  <div class="grid2">
   <div class="field"><label for="netafaNumber">النتافة</label><select id="netafaNumber"><option value="">اختر النتافة</option></select></div>
-  <div class="field"><label for="netafaType">نوع البلاغ</label><select id="netafaType"><option value="">اختر النوع</option><option value="بكرة">بكرة</option><option value="قشاط">قشاط</option><option value="صيانة">صيانة</option><option value="رد فتح">رد فتح</option><option value="تذكير">تذكير</option></select></div>
+  <div class="field"><label for="netafaType">نوع البلاغ</label><select id="netafaType"><option value="">اختر النوع</option><option value="بكرة">بكرة</option><option value="قشاط">قشاط</option><option value="موتور محروق">موتور محروق</option><option value="صيانة">صيانة</option><option value="رد فتح">رد فتح</option><option value="تذكير">تذكير</option></select></div>
  </div>
  <div class="field"><label for="netafaSide">الجهة</label><select id="netafaSide"><option value="">اختر الجهة</option><option value="الأحشاء">الأحشاء</option><option value="السكولدر">السكولدر</option></select></div>
  <div class="field"><label>الوصف الجاهز</label><div id="netafaDescription" class="output" aria-live="polite">اختر النتافة ونوع البلاغ والجهة ليظهر الوصف هنا.</div></div>
@@ -435,6 +435,7 @@ function updateNetafaatDescription(){
  const netafa='النتافة '+(ordinals[number]||number);
  let phrase='';
  if(type==='بكرة'||type==='قشاط')phrase=type+' '+netafa;
+ else if(type==='موتور محروق')phrase='موتور محروق في '+netafa;
  else if(type==='تذكير')phrase='تذكير بخصوص '+netafa;
  else phrase=type+' '+netafa;
  const description=phrase+'، جهة '+side+' – '+selectedPlantLine.name+'.';
