@@ -80,6 +80,13 @@ button.secondary{background:#e8f5f2;color:#076b60;font-weight:700;border-radius:
 @media(max-width:520px){.wrap{padding-left:11px;padding-right:11px}.panel{padding:14px}.plant-lines,.dept-grid{grid-template-columns:1fr 1fr}.plant-line{min-height:116px}.plant-shared{grid-column:1/-1}.tab{padding:9px 12px}.stats{gap:8px}}
 @media(min-width:760px){.wrap{padding-top:22px}.plant-lines{grid-template-columns:repeat(3,1fr)}.plant-shared{grid-column:auto}.dept-grid{grid-template-columns:repeat(3,1fr)}}
 
+
+<style>
+.netafaat-report{border:1px solid #cfe3df;background:linear-gradient(145deg,#f4fbf9,#fff);border-radius:17px;padding:14px;margin:0 0 14px}
+.netafaat-report h3{font-size:15px;margin:0 0 5px;color:#075f68}
+.netafaat-report .field{margin:9px 0}
+.netafaat-report .output{background:#fff;min-height:58px}
+.netafaat-report .actions button{flex:1}
 </style>
 <section class="auth-panel" id="authPanel">
  <div class="section-head"><h2>الدخول الآمن والمزامنة السحابية</h2><span class="pill">حسابك الخاص</span></div>
@@ -117,7 +124,17 @@ button.secondary{background:#e8f5f2;color:#076b60;font-weight:700;border-radius:
 <section id="plantLine6000" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">صفحة مستقلة</span></div><div class="line-hero line-hero-6000"><span>خط الإنتاج</span><h2>خط 6000</h2><p>الأقسام الأربعة ومتابعة المعدات والأعطال الخاصة بهذا الخط.</p></div><div class="section-head"><h2>أقسام خط 6000</h2><span class="muted">اختر القسم</span></div><div id="line6000DeptGrid" class="dept-grid"></div></div></section>
 <section id="plantLine4000" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">صفحة مستقلة</span></div><div class="line-hero line-hero-4000"><span>خط الإنتاج</span><h2>خط 4000</h2><p>الأقسام الأربعة ومتابعة المعدات والأعطال الخاصة بهذا الخط.</p></div><div class="section-head"><h2>أقسام خط 4000</h2><span class="muted">اختر القسم</span></div><div id="line4000DeptGrid" class="dept-grid"></div></div></section>
 <section id="plantShared" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">مشترك بين الخطين</span></div><div class="line-hero line-hero-shared"><span>قسم مشترك</span><h2>التقطيع</h2><p>صفحة مستقلة لقسم التقطيع الذي يخدم خطي 6000 و4000.</p></div><div class="section-head"><h2>قسم التقطيع</h2><span class="muted">المعدات والسجل</span></div><div id="sharedDeptGrid" class="dept-grid"></div></div></section>
-<section id="plantEquipmentPage" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><span class="pill">تفاصيل القسم</span></div><div class="section-head"><div><h2 id="plantHeading">معدات القسم</h2><p class="muted" id="plantSubheading">قائمة المعدات وحالاتها</p></div><span class="pill" id="plantEquipmentCount">0 معدات</span></div><div class="actions"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div><p class="status" id="plantStatusMsg"></p><div id="equipmentForm" class="panel hidden" style="margin-top:12px"><h2>إضافة معدة للقسم</h2><div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div><div class="grid2"><div class="field"><label for="equipmentCode">الرقم / الكود (اختياري)</label><input id="equipmentCode" placeholder="مثال: M-01"></div><div class="field"><label for="equipmentStatus">حالة المعدة</label><select id="equipmentStatus"><option value="operational">تعمل</option><option value="fault">عليها عطل</option><option value="maintenance">تحت الصيانة</option><option value="stopped">متوقفة</option></select></div></div><div class="field"><label for="equipmentNotes">ملاحظات (اختياري)</label><textarea id="equipmentNotes" rows="2" placeholder="معلومات تساعد في تمييز المعدة"></textarea></div><div class="actions"><button class="primary" id="saveEquipmentBtn">حفظ المعدة</button><button class="quiet" id="cancelEquipmentBtn">إلغاء</button></div><p class="status" id="equipmentStatusMsg"></p></div></div></section>
+<section id="plantEquipmentPage" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><span class="pill">تفاصيل القسم</span></div><div class="section-head"><div><h2 id="plantHeading">معدات القسم</h2><p class="muted" id="plantSubheading">قائمة المعدات وحالاتها</p></div><span class="pill" id="plantEquipmentCount">0 معدات</span></div><div class="actions"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="netafaatQuickReport" class="netafaat-report hidden">
+ <div class="section-head"><div><h3>بلاغات النتافات</h3><p class="muted">اختَر التفاصيل وسيظهر الوصف جاهزاً للنسخ والإرسال.</p></div><span class="pill">بلاغ سريع</span></div>
+ <div class="grid2">
+  <div class="field"><label for="netafaNumber">النتافة</label><select id="netafaNumber"><option value="">اختر النتافة</option></select></div>
+  <div class="field"><label for="netafaType">نوع البلاغ</label><select id="netafaType"><option value="">اختر النوع</option><option value="بكرة">بكرة</option><option value="قشاط">قشاط</option><option value="صيانة">صيانة</option><option value="رد فتح">رد فتح</option><option value="تذكير">تذكير</option></select></div>
+ </div>
+ <div class="field"><label for="netafaSide">الجهة</label><select id="netafaSide"><option value="">اختر الجهة</option><option value="الأحشاء">الأحشاء</option><option value="السكولدر">السكولدر</option></select></div>
+ <div class="field"><label>الوصف الجاهز</label><div id="netafaDescription" class="output" aria-live="polite">اختر النتافة ونوع البلاغ والجهة ليظهر الوصف هنا.</div></div>
+ <div class="actions"><button class="secondary" id="copyNetafaDescription" type="button" disabled>نسخ الوصف</button><button class="primary" id="whatsappNetafaDescription" type="button" disabled>إرسال عبر واتساب</button></div>
+</div>
+<div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div><p class="status" id="plantStatusMsg"></p><div id="equipmentForm" class="panel hidden" style="margin-top:12px"><h2>إضافة معدة للقسم</h2><div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div><div class="grid2"><div class="field"><label for="equipmentCode">الرقم / الكود (اختياري)</label><input id="equipmentCode" placeholder="مثال: M-01"></div><div class="field"><label for="equipmentStatus">حالة المعدة</label><select id="equipmentStatus"><option value="operational">تعمل</option><option value="fault">عليها عطل</option><option value="maintenance">تحت الصيانة</option><option value="stopped">متوقفة</option></select></div></div><div class="field"><label for="equipmentNotes">ملاحظات (اختياري)</label><textarea id="equipmentNotes" rows="2" placeholder="معلومات تساعد في تمييز المعدة"></textarea></div><div class="actions"><button class="primary" id="saveEquipmentBtn">حفظ المعدة</button><button class="quiet" id="cancelEquipmentBtn">إلغاء</button></div><p class="status" id="equipmentStatusMsg"></p></div></div></section>
 
 <section id="home" class="view">
  <div class="panel"><div class="section-head"><h2>مساحة العمل اليومية</h2><span class="pill">الشفت المسائي</span></div><div class="tilegrid">
@@ -397,8 +414,39 @@ function openPlantLine(code){
 function openPlantDepartment(id){
  selectedPlantDepartment=plantDepartments.find(d=>d.id===id);if(!selectedPlantDepartment)return;
  $('plantHeading').textContent=selectedPlantDepartment.name;$('plantSubheading').textContent=selectedPlantLine.name+' • قائمة المعدات';
- $('equipmentForm').classList.add('hidden');renderEquipment();go('plantEquipmentPage');
+ $('equipmentForm').classList.add('hidden');
+ const netafaatPanel=$('netafaatQuickReport');
+ netafaatPanel.classList.toggle('hidden',selectedPlantDepartment.name!=='الذبح');
+ if(selectedPlantDepartment.name==='الذبح')setupNetafaatQuickReport();
+ renderEquipment();go('plantEquipmentPage');
 }
+function setupNetafaatQuickReport(){
+ const count=selectedPlantLine?.code==='line_6000'?3:selectedPlantLine?.code==='line_4000'?2:0;
+ const select=$('netafaNumber');
+ select.innerHTML='<option value="">اختر النتافة</option>'+Array.from({length:count},(_,i)=>'<option value="'+(i+1)+'">النتافة '+['الأولى','الثانية','الثالثة'][i]+'</option>').join('');
+ $('netafaType').value='';$('netafaSide').value='';
+ updateNetafaatDescription();
+}
+function updateNetafaatDescription(){
+ const number=$('netafaNumber').value,type=$('netafaType').value,side=$('netafaSide').value;
+ const ordinals={1:'الأولى',2:'الثانية',3:'الثالثة'};
+ const out=$('netafaDescription'),copyBtn=$('copyNetafaDescription'),waBtn=$('whatsappNetafaDescription');
+ if(!number||!type||!side||!selectedPlantLine){out.textContent='اختر النتافة ونوع البلاغ والجهة ليظهر الوصف هنا.';copyBtn.disabled=true;waBtn.disabled=true;return}
+ const netafa='النتافة '+(ordinals[number]||number);
+ let phrase='';
+ if(type==='بكرة'||type==='قشاط')phrase=type+' '+netafa;
+ else if(type==='تذكير')phrase='تذكير بخصوص '+netafa;
+ else phrase=type+' '+netafa;
+ const description=phrase+'، جهة '+side+' – '+selectedPlantLine.name+'.';
+ out.textContent=description;copyBtn.disabled=false;waBtn.disabled=false;
+}
+['netafaNumber','netafaType','netafaSide'].forEach(id=>$(id).addEventListener('change',updateNetafaatDescription));
+$('copyNetafaDescription').onclick=()=>copy($('netafaDescription').textContent);
+$('whatsappNetafaDescription').onclick=()=>{
+ const text=$('netafaDescription').textContent.trim();
+ if(!text||text==='اختر النتافة ونوع البلاغ والجهة ليظهر الوصف هنا.')return;
+ window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
+};
 function renderEquipment(){
  const list=plantEquipment.filter(e=>e.department_id===selectedPlantDepartment?.id);
  $('equipmentList').innerHTML=list.length?list.map(e=>'<div class="equipment-card"><div><strong>'+esc(e.name)+'</strong><small>'+(e.asset_code?esc(e.asset_code)+' • ':'')+statusLabel(e.status)+'</small></div><span class="pill">'+(e.status==='operational'?'عاملة':e.status==='fault'?'عطل':'متابعة')+'</span></div>').join(''):'<div class="empty">لا توجد معدات مسجلة هنا بعد. أضف أول معدة لهذا القسم.</div>';$('plantEquipmentCount').textContent=list.length+' معدات';
