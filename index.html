@@ -29,6 +29,7 @@
 @media(max-width:420px){.plant-lines,.dept-grid{grid-template-columns:1fr 1fr}}
 
 /* Dedicated plant line pages */.plant-directory{padding:20px}.eyebrow-dark{font-size:11px;font-weight:800;color:#078575;margin:0 0 5px}.plant-lines{grid-template-columns:1fr 1fr;gap:14px}.plant-line{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:190px;padding:18px;text-align:right;border-radius:20px}.plant-line strong{font-size:21px}.plant-line small{font-size:12px;line-height:1.8}.line-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#e3f4ef;color:#087f70;font-size:19px;font-weight:900}.line-open{margin-top:auto;color:#087f70;font-size:12px;font-weight:800}.plant-shared{grid-column:1/-1;min-height:130px;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:13px}.plant-shared .line-open{width:100%}.plant-page-panel{padding:16px}.plant-page-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}.line-hero{padding:20px;border-radius:20px;color:#fff;margin-bottom:18px;background:linear-gradient(130deg,#153c55,#087f70)}.line-hero span{font-size:11px;color:#d3eee8;font-weight:700}.line-hero h2{font-size:27px;color:#fff;margin:3px 0}.line-hero p{font-size:12px;color:#e0f3ef;margin:0}.line-hero-4000{background:linear-gradient(130deg,#263c66,#347c9b)}.line-hero-shared{background:linear-gradient(130deg,#51406f,#087f70)}.dept-grid{grid-template-columns:1fr 1fr}.dept-card{min-height:150px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:15px}.dept-card .dept-icon{font-size:24px}.dept-card b{font-size:15px}.dept-card em{font-style:normal;color:#087f70;font-size:11px;font-weight:800;margin-top:auto}.plant-page-panel .equipment-card{margin-top:10px}@media(max-width:420px){.plant-line{min-height:165px;padding:13px}.plant-line strong{font-size:18px}.plant-page-panel{padding:12px}}@media(min-width:760px){.plant-lines{grid-template-columns:1fr 1fr}.plant-shared{grid-column:1/-1}.dept-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
+  <link rel="stylesheet" href="./home-redesign.css">
 </head>
 <body>
 <header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الأعطال وأوامر العمل وتقارير الشفت في مسالخ الدواجن.</p></div></header>
@@ -106,8 +107,7 @@ button.secondary{background:#e8f5f2;color:#076b60;font-weight:700;border-radius:
   <div class="actions"><button class="primary" id="saveNewPasswordBtn" type="button">حفظ كلمة المرور الجديدة</button></div>
   <p class="hint">لن تتغير كلمة المرور إلا بعد فتح رابط الاستعادة الصحيح وإتمام الحفظ هنا.</p>
  </div>
- <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div>
- <div id="cloudStatus" class="cloud-state" role="status">يتم حفظ البيانات على هذا الجهاز تلقائياً.</div>
+ <div id="authSigned" class="hidden"><div id="signedEmail" class="muted"></div><div class="actions"><button class="secondary" id="syncBtn">مزامنة الآن</button><button class="quiet" id="logoutBtn">تسجيل الخروج</button></div></div> <div id="cloudStatus" class="cloud-state" role="status">يتم حفظ البيانات على هذا الجهاز تلقائياً.</div>
 </section>
 
 <div class="stats">
@@ -216,8 +216,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const isUuid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status=(id,msg)=>$(id).textContent=msg;
-let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false,refreshPromise=null;
-const TOMBSTONE_KEY='maintenanceSupervisor.deleted.v1';
+let authSession=null,cloudReady=false,syncBusy=false,syncAgain=false,refreshPromise=null;const TOMBSTONE_KEY='maintenanceSupervisor.deleted.v1';
 let tombstones=[];try{tombstones=JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]');if(!Array.isArray(tombstones))tombstones=[]}catch(e){tombstones=[]}
 const tombstoneKey=(table,id)=>table+':'+String(id);
 function markDeleted(table,id){const k=tombstoneKey(table,id);if(!tombstones.includes(k))tombstones.push(k);localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(tombstones));}
@@ -326,8 +325,7 @@ function render(){
  const recent=[...db.faults.map(x=>({t:'عطل • '+x.dept,b:x.text})),...db.hands.map(x=>({t:'تسليم • '+x.state,b:x.text}))].slice(-4).reverse();
  $('recentList').innerHTML=recent.length?recent.map(x=>card(x.t,'سجل محلي',x.b)).join(''):'<div class="empty">لا توجد أعمال مسجلة بعد.</div>';
  document.querySelectorAll('[data-copyfault]').forEach(b=>b.onclick=()=>copy(db.faults.find(x=>x.id===b.dataset.copyfault)?.text||''));
- document.querySelectorAll('[data-delfault]').forEach(b=>b.onclick=()=>{if(confirm('حذف هذه الملاحظة؟')){db.faults=db.faults.filter(x=>x.id!==b.dataset.delfault);deleteCloud('maintenance_records',b.dataset.delfault);save();render();}});
- document.querySelectorAll('[data-delhand]').forEach(b=>b.onclick=()=>{db.hands=db.hands.filter(x=>x.id!==b.dataset.delhand);deleteCloud('shift_handovers',b.dataset.delhand);save();render();});
+ document.querySelectorAll('[data-delfault]').forEach(b=>b.onclick=()=>{if(confirm('حذف هذه الملاحظة؟')){db.faults=db.faults.filter(x=>x.id!==b.dataset.delfault);deleteCloud('maintenance_records',b.dataset.delfault);save();render();}}); document.querySelectorAll('[data-delhand]').forEach(b=>b.onclick=()=>{db.hands=db.hands.filter(x=>x.id!==b.dataset.delhand);deleteCloud('shift_handovers',b.dataset.delhand);save();render();});
  document.querySelectorAll('[data-delpart]').forEach(b=>b.onclick=()=>{db.parts=db.parts.filter(x=>x.id!==b.dataset.delpart);deleteCloud('spare_parts_requests',b.dataset.delpart);save();render();});
  document.querySelectorAll('[data-handstate]').forEach(b=>b.onclick=()=>{const x=db.hands.find(y=>y.id===b.dataset.handstate);if(x){x.state=x.state==='مكتمل'?'مفتوح للمتابعة':'مكتمل';x.updatedAt=new Date().toISOString();save();render();}});
 }
@@ -436,8 +434,7 @@ function updateNetafaatDescription(){
  let phrase='';
  if(type==='بكرة'||type==='قشاط')phrase=type+' في '+netafa;
  else if(type==='موتور محروق')phrase='موتور محروق في '+netafa;
- else if(type==='تذكير')phrase='تذكير بخصوص '+netafa;
- else phrase=type+' '+netafa;
+ else if(type==='تذكير')phrase='تذكير بخصوص '+netafa; else phrase=type+' '+netafa;
  const description=phrase+'، جهة '+side+' – '+selectedPlantLine.name+'.';
  out.textContent=description;copyBtn.disabled=false;waBtn.disabled=false;
 }
@@ -546,8 +543,7 @@ $('rewriteBtn').onclick=async()=>{
  const textIn=$('faultInput').value.trim();if(!textIn){status('faultStatus','أدخل وصف العطل أولاً.');return}
  if(!authSession?.access_token){status('faultStatus','خدمة الصياغة الذكية غير متاحة حالياً؛ يمكنك حفظ الوصف يدوياً على هذا الجهاز.');return}
  const endpoint=AI_ENDPOINT;
- lastRewrittenInput='';
- $('rewriteBtn').disabled=true;$('rewriteBtn').textContent='جارٍ تجهيز الصياغة...';
+ lastRewrittenInput=''; $('rewriteBtn').disabled=true;$('rewriteBtn').textContent='جارٍ تجهيز الصياغة...';
  try{let res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});if(res.status===401&&await refreshSession())res=await fetch(endpoint,{method:'POST',headers:{...authHeaders(authSession.access_token)},body:JSON.stringify({task:'maintenance_report_rewrite',language:'ar',tone:'professional_natural',department:$('faultDept').value,status:$('faultState').value,text:textIn})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||('HTTP '+res.status));const out=data.text;if(typeof out!=='string'||!out.trim())throw new Error('لم تصل صياغة صالحة');$('rewriteOutput').textContent=out;
  lastRewrittenInput=textIn;
  const savedRecord=db.faults.find(x=>x.id===activeFaultDraftId);
@@ -645,4 +641,5 @@ if(!window.Capacitor?.isNativePlatform?.()&&'serviceWorker' in navigator&&locati
 }
 })();
 </script>
+  <script src="./home-redesign.js"></script>
 </body></html>
