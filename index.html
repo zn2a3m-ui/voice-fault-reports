@@ -434,7 +434,7 @@ function updateNetafaatDescription(){
  if(!number||!type||!side||!selectedPlantLine){out.textContent='اختر النتافة ونوع البلاغ والجهة ليظهر الوصف هنا.';copyBtn.disabled=true;waBtn.disabled=true;return}
  const netafa='النتافة '+(ordinals[number]||number);
  let phrase='';
- if(type==='بكرة'||type==='قشاط')phrase=type+' '+netafa;
+ if(type==='بكرة'||type==='قشاط')phrase=type+' في '+netafa;
  else if(type==='موتور محروق')phrase='موتور محروق في '+netafa;
  else if(type==='تذكير')phrase='تذكير بخصوص '+netafa;
  else phrase=type+' '+netafa;
