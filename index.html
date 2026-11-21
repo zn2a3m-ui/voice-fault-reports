@@ -28,7 +28,7 @@
 .plant-back{background:#eef3f0;color:#34574b}
 @media(max-width:420px){.plant-lines,.dept-grid{grid-template-columns:1fr 1fr}}
 
-</style>
+/* Dedicated plant line pages */.plant-directory{padding:20px}.eyebrow-dark{font-size:11px;font-weight:800;color:#078575;margin:0 0 5px}.plant-lines{grid-template-columns:1fr 1fr;gap:14px}.plant-line{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:190px;padding:18px;text-align:right;border-radius:20px}.plant-line strong{font-size:21px}.plant-line small{font-size:12px;line-height:1.8}.line-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#e3f4ef;color:#087f70;font-size:19px;font-weight:900}.line-open{margin-top:auto;color:#087f70;font-size:12px;font-weight:800}.plant-shared{grid-column:1/-1;min-height:130px;flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:13px}.plant-shared .line-open{width:100%}.plant-page-panel{padding:16px}.plant-page-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}.line-hero{padding:20px;border-radius:20px;color:#fff;margin-bottom:18px;background:linear-gradient(130deg,#153c55,#087f70)}.line-hero span{font-size:11px;color:#d3eee8;font-weight:700}.line-hero h2{font-size:27px;color:#fff;margin:3px 0}.line-hero p{font-size:12px;color:#e0f3ef;margin:0}.line-hero-4000{background:linear-gradient(130deg,#263c66,#347c9b)}.line-hero-shared{background:linear-gradient(130deg,#51406f,#087f70)}.dept-grid{grid-template-columns:1fr 1fr}.dept-card{min-height:150px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:15px}.dept-card .dept-icon{font-size:24px}.dept-card b{font-size:15px}.dept-card em{font-style:normal;color:#087f70;font-size:11px;font-weight:800;margin-top:auto}.plant-page-panel .equipment-card{margin-top:10px}@media(max-width:420px){.plant-line{min-height:165px;padding:13px}.plant-line strong{font-size:18px}.plant-page-panel{padding:12px}}@media(min-width:760px){.plant-lines{grid-template-columns:1fr 1fr}.plant-shared{grid-column:1/-1}.dept-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
 </head>
 <body>
 <header><div class="head"><p class="eyebrow">إدارة • متابعة • تقارير</p><h1>مساعد مشرف الصيانة</h1><p>مساحة عمل عربية لمتابعة الأعطال وأوامر العمل وتقارير الشفت في مسالخ الدواجن.</p></div></header>
@@ -113,26 +113,11 @@ button.secondary{background:#e8f5f2;color:#076b60;font-weight:700;border-radius:
  <button class="tab active" data-tab="home">الرئيسية</button><button class="tab" data-tab="plant">المسلخ والمعدات</button><button class="tab" data-tab="faults">الأعطال</button><button class="tab hidden" data-tab="production" aria-hidden="true">تقارير الإنتاج</button><button class="tab" data-tab="shift">تقرير الشفت</button><button class="tab" data-tab="handover">التسليم والاستلام</button><button class="tab" data-tab="parts">قطع الغيار</button><button class="tab" data-tab="settings">الإعدادات</button>
 </nav>
 
-<section id="plant" class="view hidden">
- <div class="panel">
-  <div class="section-head"><div><h2 id="plantHeading">هيكل المسلخ</h2><p class="muted" id="plantSubheading">اختر الخط لعرض أقسامه ومعداته</p></div><span class="pill">الهيكل المعتمد</span></div>
-  <div id="plantLines" class="plant-lines">
-   <button class="plant-line" data-line="line_6000"><strong>خط 6000</strong><small>4 أقسام مستقلة</small></button>
-   <button class="plant-line" data-line="line_4000"><strong>خط 4000</strong><small>4 أقسام مستقلة</small></button>
-   <button class="plant-line plant-shared" data-line="shared"><strong>قسم التقطيع المشترك</strong><small>يخدم الخطين</small></button>
-  </div>
-  <div id="plantDepartments" class="hidden"><div class="actions"><button class="plant-back" id="plantBackLines">← كل الخطوط</button></div><div id="plantDeptGrid" class="dept-grid"></div></div>
-  <div id="plantEquipment" class="hidden"><div class="actions"><button class="plant-back" id="plantBackDepartments">← الأقسام</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div><p class="status" id="plantStatusMsg"></p>
-   <div id="equipmentForm" class="panel hidden" style="margin-top:12px">
-    <h2>إضافة معدة للقسم</h2>
-    <div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div>
-    <div class="grid2"><div class="field"><label for="equipmentCode">الرقم / الكود (اختياري)</label><input id="equipmentCode" placeholder="مثال: M-01"></div><div class="field"><label for="equipmentStatus">حالة المعدة</label><select id="equipmentStatus"><option value="operational">تعمل</option><option value="fault">عليها عطل</option><option value="maintenance">تحت الصيانة</option><option value="stopped">متوقفة</option></select></div></div>
-    <div class="field"><label for="equipmentNotes">ملاحظات (اختياري)</label><textarea id="equipmentNotes" rows="2" placeholder="معلومات تساعد في تمييز المعدة"></textarea></div>
-    <div class="actions"><button class="primary" id="saveEquipmentBtn">حفظ المعدة</button><button class="quiet" id="cancelEquipmentBtn">إلغاء</button></div><p class="status" id="equipmentStatusMsg"></p>
-   </div>
-  </div>
- </div>
-</section>
+<section id="plant" class="view hidden"><div class="panel plant-directory"><div class="section-head"><div><p class="eyebrow-dark">إدارة مواقع الصيانة</p><h2>اختر صفحة الخط</h2><p class="muted">كل خط له صفحة مستقلة بأقسامه ومعداته وسجل أعماله.</p></div><span class="pill">هيكل المصنع</span></div><div id="plantLines" class="plant-lines"><button class="plant-line" data-line="line_6000"><span class="line-icon">٦٠٠٠</span><strong>خط 6000</strong><small>الوصول • الذبح • الأحشاء • التغليف</small><span class="line-open">فتح صفحة الخط ←</span></button><button class="plant-line" data-line="line_4000"><span class="line-icon">٤٠٠٠</span><strong>خط 4000</strong><small>الوصول • الذبح • الأحشاء • التغليف</small><span class="line-open">فتح صفحة الخط ←</span></button><button class="plant-line plant-shared" data-line="shared"><span class="line-icon">✂</span><strong>التقطيع المشترك</strong><small>صفحة مستقلة تخدم الخطين</small><span class="line-open">فتح صفحة القسم ←</span></button></div></div></section>
+<section id="plantLine6000" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">صفحة مستقلة</span></div><div class="line-hero line-hero-6000"><span>خط الإنتاج</span><h2>خط 6000</h2><p>الأقسام الأربعة ومتابعة المعدات والأعطال الخاصة بهذا الخط.</p></div><div class="section-head"><h2>أقسام خط 6000</h2><span class="muted">اختر القسم</span></div><div id="line6000DeptGrid" class="dept-grid"></div></div></section>
+<section id="plantLine4000" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">صفحة مستقلة</span></div><div class="line-hero line-hero-4000"><span>خط الإنتاج</span><h2>خط 4000</h2><p>الأقسام الأربعة ومتابعة المعدات والأعطال الخاصة بهذا الخط.</p></div><div class="section-head"><h2>أقسام خط 4000</h2><span class="muted">اختر القسم</span></div><div id="line4000DeptGrid" class="dept-grid"></div></div></section>
+<section id="plantShared" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" data-plant-home>← كل الخطوط</button><span class="pill">مشترك بين الخطين</span></div><div class="line-hero line-hero-shared"><span>قسم مشترك</span><h2>التقطيع</h2><p>صفحة مستقلة لقسم التقطيع الذي يخدم خطي 6000 و4000.</p></div><div class="section-head"><h2>قسم التقطيع</h2><span class="muted">المعدات والسجل</span></div><div id="sharedDeptGrid" class="dept-grid"></div></div></section>
+<section id="plantEquipmentPage" class="view hidden"><div class="panel plant-page-panel"><div class="plant-page-top"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><span class="pill">تفاصيل القسم</span></div><div class="section-head"><div><h2 id="plantHeading">معدات القسم</h2><p class="muted" id="plantSubheading">قائمة المعدات وحالاتها</p></div><span class="pill" id="plantEquipmentCount">0 معدات</span></div><div class="actions"><button class="plant-back" id="plantBackDepartments">← أقسام الخط</button><button class="primary" id="addEquipmentBtn">＋ إضافة معدة</button></div><div id="equipmentList" class="cards"><div class="empty">لا توجد معدات مسجلة في هذا القسم.</div></div><p class="status" id="plantStatusMsg"></p><div id="equipmentForm" class="panel hidden" style="margin-top:12px"><h2>إضافة معدة للقسم</h2><div class="field"><label for="equipmentName">اسم المعدة</label><input id="equipmentName" placeholder="اكتب اسم المعدة كما هو معتمد عندكم"></div><div class="grid2"><div class="field"><label for="equipmentCode">الرقم / الكود (اختياري)</label><input id="equipmentCode" placeholder="مثال: M-01"></div><div class="field"><label for="equipmentStatus">حالة المعدة</label><select id="equipmentStatus"><option value="operational">تعمل</option><option value="fault">عليها عطل</option><option value="maintenance">تحت الصيانة</option><option value="stopped">متوقفة</option></select></div></div><div class="field"><label for="equipmentNotes">ملاحظات (اختياري)</label><textarea id="equipmentNotes" rows="2" placeholder="معلومات تساعد في تمييز المعدة"></textarea></div><div class="actions"><button class="primary" id="saveEquipmentBtn">حفظ المعدة</button><button class="quiet" id="cancelEquipmentBtn">إلغاء</button></div><p class="status" id="equipmentStatusMsg"></p></div></div></section>
 
 <section id="home" class="view">
  <div class="panel"><div class="section-head"><h2>مساحة العمل اليومية</h2><span class="pill">الشفت المسائي</span></div><div class="tilegrid">
@@ -308,7 +293,7 @@ window.addEventListener('online',()=>{if(cloudReady)syncCloud()});
 ensureAppSession();
 
 const stamp=()=>new Intl.DateTimeFormat('ar-JO',{dateStyle:'short',timeStyle:'short'}).format(new Date());
-function go(tab){if(activeVoice&&activeVoice.recorder.state==='recording'&&((activeVoice.button.id==='micBtn'&&tab!=='faults')||(activeVoice.button.id==='prodMic'&&tab!=='production'))){const voice=activeVoice;voice.button.textContent='جارٍ إيقاف التسجيل...';voice.button.classList.remove('recording');try{voice.recorder.stop()}catch(e){voice.stream?.getTracks().forEach(t=>t.stop());if(activeVoice?.recorder===voice.recorder)activeVoice=null}}document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==tab));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));}
+function go(tab){if(activeVoice&&activeVoice.recorder.state==='recording'&&((activeVoice.button.id==='micBtn'&&tab!=='faults')||(activeVoice.button.id==='prodMic'&&tab!=='production'))){const voice=activeVoice;voice.button.textContent='جارٍ إيقاف التسجيل...';voice.button.classList.remove('recording');try{voice.recorder.stop()}catch(e){voice.stream?.getTracks().forEach(t=>t.stop());if(activeVoice?.recorder===voice.recorder)activeVoice=null}}document.querySelectorAll('.view').forEach(x=>x.classList.toggle('hidden',x.id!==tab));const navTab=tab==='plant'||tab.startsWith('plantLine')||tab==='plantShared'||tab==='plantEquipmentPage'?'plant':tab;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===navTab));window.scrollTo?.(0,0);}
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function renderStats(){$('faultCount').textContent=db.faults.length;$('workCount').textContent=db.shifts.length;$('pendingCount').textContent=db.hands.filter(x=>x.state!=='مكتمل').length;$('partsCount').textContent=db.parts.length;}
@@ -402,24 +387,24 @@ function renderPlant(){
 }
 function openPlantLine(code){
  selectedPlantLine=plantLines.find(x=>x.code===code);if(!selectedPlantLine)return;
- $('plantLines').classList.add('hidden');$('plantDepartments').classList.remove('hidden');$('plantEquipment').classList.add('hidden');
- $('plantHeading').textContent=selectedPlantLine.name;$('plantSubheading').textContent=code==='shared'?'قسم مشترك بين الخطين':'اختر القسم لعرض معداته';
+ const pageId=code==='line_6000'?'plantLine6000':code==='line_4000'?'plantLine4000':'plantShared';
+ const gridId=code==='line_6000'?'line6000DeptGrid':code==='line_4000'?'line4000DeptGrid':'sharedDeptGrid';
+ const grid=$(gridId);if(!grid)return;
  const depts=plantDepartments.filter(d=>d.line_id===selectedPlantLine.id);
- $('plantDeptGrid').innerHTML=depts.map(d=>'<button class="dept-card" data-dept="'+esc(d.id)+'"><b>'+esc(d.name)+'</b><span>'+plantEquipment.filter(e=>e.department_id===d.id).length+' معدات مسجلة</span></button>').join('');
- $('plantDeptGrid').querySelectorAll('[data-dept]').forEach(b=>b.onclick=()=>openPlantDepartment(b.dataset.dept));
+ grid.innerHTML=depts.map(d=>'<button class="dept-card" data-dept="'+esc(d.id)+'"><span class="dept-icon">'+(d.name==='الوصول'?'🚚':d.name==='الذبح'?'🔧':d.name==='الأحشاء'?'⚙️':d.name==='التغليف'?'📦':'✂️')+'</span><b>'+esc(d.name)+'</b><span>'+plantEquipment.filter(e=>e.department_id===d.id).length+' معدات مسجلة</span><em>فتح القسم ←</em></button>').join('');
+ grid.querySelectorAll('[data-dept]').forEach(b=>b.onclick=()=>openPlantDepartment(b.dataset.dept));go(pageId);
 }
 function openPlantDepartment(id){
  selectedPlantDepartment=plantDepartments.find(d=>d.id===id);if(!selectedPlantDepartment)return;
- $('plantDepartments').classList.add('hidden');$('plantEquipment').classList.remove('hidden');
  $('plantHeading').textContent=selectedPlantDepartment.name;$('plantSubheading').textContent=selectedPlantLine.name+' • قائمة المعدات';
- $('equipmentForm').classList.add('hidden');renderEquipment();
+ $('equipmentForm').classList.add('hidden');renderEquipment();go('plantEquipmentPage');
 }
 function renderEquipment(){
  const list=plantEquipment.filter(e=>e.department_id===selectedPlantDepartment?.id);
- $('equipmentList').innerHTML=list.length?list.map(e=>'<div class="equipment-card"><div><strong>'+esc(e.name)+'</strong><small>'+(e.asset_code?esc(e.asset_code)+' • ':'')+statusLabel(e.status)+'</small></div><span class="pill">'+(e.status==='operational'?'عاملة':e.status==='fault'?'عطل':'متابعة')+'</span></div>').join(''):'<div class="empty">لا توجد معدات مسجلة هنا بعد. أضف أول معدة لهذا القسم.</div>';
+ $('equipmentList').innerHTML=list.length?list.map(e=>'<div class="equipment-card"><div><strong>'+esc(e.name)+'</strong><small>'+(e.asset_code?esc(e.asset_code)+' • ':'')+statusLabel(e.status)+'</small></div><span class="pill">'+(e.status==='operational'?'عاملة':e.status==='fault'?'عطل':'متابعة')+'</span></div>').join(''):'<div class="empty">لا توجد معدات مسجلة هنا بعد. أضف أول معدة لهذا القسم.</div>';$('plantEquipmentCount').textContent=list.length+' معدات';
 }
-$('plantBackLines').onclick=()=>{$('plantDepartments').classList.add('hidden');$('plantLines').classList.remove('hidden');$('plantHeading').textContent='هيكل المسلخ';$('plantSubheading').textContent='اختر الخط لعرض أقسامه ومعداته'};
-$('plantBackDepartments').onclick=()=>{if(selectedPlantLine)openPlantLine(selectedPlantLine.code)};
+document.querySelectorAll('[data-plant-home]').forEach(b=>b.onclick=()=>go('plant'));
+$('plantBackDepartments').onclick=()=>{if(selectedPlantLine)openPlantLine(selectedPlantLine.code);else go('plant')};
 $('addEquipmentBtn').onclick=()=>{$('equipmentForm').classList.remove('hidden');$('equipmentName').focus()};
 $('cancelEquipmentBtn').onclick=()=>$('equipmentForm').classList.add('hidden');
 $('saveEquipmentBtn').onclick=async()=>{
