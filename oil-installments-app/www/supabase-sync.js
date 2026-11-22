@@ -66,25 +66,31 @@
     for (const customer of local) {
       const phone = e164(customer.phone);
       const consent = !!customer.whatsappOptIn;
+      const localUpdated = customer.updatedAt || "1970-01-01T00:00:00.000Z";
+      const lookup = await rest("oil_customers?select=id,local_id,updated_at&owner_id=eq." + encodeURIComponent(owner) + "&local_id=eq." + encodeURIComponent(String(customer.id)));
+      const existing = lookup && lookup[0];
+      const remoteIsNewer = !!(existing?.updated_at && Date.parse(existing.updated_at) > Date.parse(localUpdated));
       const row = {
         owner_id: owner, local_id: String(customer.id), name: customer.name,
         phone_e164: phone, whatsapp_opt_in: consent,
         opt_in_at: consent ? (customer.whatsappPreferenceUpdatedAt || new Date().toISOString()) : null,
         auto_whatsapp_reminders: !!customer.autoReminder && consent && !!phone,
-        sale_data: { phone: customer.phone || "", item: customer.item || "زيت", qty: customer.qty, tank: customer.tank, price: customer.price, down: customer.down, whatsappOptIn: consent, autoReminder: !!customer.autoReminder, whatsappPreferenceUpdatedAt: customer.whatsappPreferenceUpdatedAt || null },
-        updated_at: new Date().toISOString()
+        sale_data: { phone: customer.phone || "", item: customer.item || "زيت", qty: customer.qty, tank: customer.tank, price: customer.price, down: customer.down, whatsappOptIn: consent, autoReminder: !!customer.autoReminder, whatsappPreferenceUpdatedAt: customer.whatsappPreferenceUpdatedAt || null, updatedAt: localUpdated },
+        updated_at: localUpdated
       };
-      await rest("oil_customers?on_conflict=owner_id,local_id", { method: "POST", body: JSON.stringify(row) });
+      if (!remoteIsNewer) await rest("oil_customers?on_conflict=owner_id,local_id", { method: "POST", body: JSON.stringify(row) });
       const found = await rest("oil_customers?select=id,local_id&owner_id=eq." + encodeURIComponent(owner) + "&local_id=eq." + encodeURIComponent(String(customer.id)));
       const remote = found && found[0];
       if (!remote) throw new Error("تعذر تأكيد حفظ بيانات أحد الزبائن");
-      const installments = (customer.inst || []).map((item, index) => ({
-        owner_id: owner, customer_id: remote.id, installment_number: index + 1,
-        due_date: item.date, amount: item.amt, paid: !!item.paid,
-        paid_at: item.paid ? (item.paidAt || new Date().toISOString()) : null,
-        updated_at: new Date().toISOString()
-      }));
-      if (installments.length) await rest("oil_installments?on_conflict=customer_id,installment_number", { method: "POST", body: JSON.stringify(installments) });
+      if (!remoteIsNewer) {
+        const installments = (customer.inst || []).map((item, index) => ({
+          owner_id: owner, customer_id: remote.id, installment_number: index + 1,
+          due_date: item.date, amount: item.amt, paid: !!item.paid,
+          paid_at: item.paid ? (item.paidAt || new Date().toISOString()) : null,
+          updated_at: localUpdated
+        }));
+        if (installments.length) await rest("oil_installments?on_conflict=customer_id,installment_number", { method: "POST", body: JSON.stringify(installments) });
+      }
     }
     const [customers, installments] = await Promise.all([
       rest("oil_customers?select=id,local_id,name,phone_e164,whatsapp_opt_in,opt_in_at,auto_whatsapp_reminders,sale_data&owner_id=eq." + encodeURIComponent(owner)),
@@ -103,12 +109,13 @@
       const remoteData = {
         id: String(c.local_id), name: c.name, phone: meta.phone || c.phone_e164 || "",
         item: meta.item || "زيت", qty: Number(meta.qty || 1), tank: Number(meta.tank || 130),
-        price: Number(meta.price || 0), down: Number(meta.down || 0),
+        price: Number(meta.price || 0), down: Number(meta.down || 0), updatedAt: c.updated_at || meta.updatedAt || null,
         whatsappOptIn: !!c.whatsapp_opt_in, autoReminder: !!c.auto_whatsapp_reminders,
         whatsappPreferenceUpdatedAt: c.opt_in_at || null,
         inst: (byCustomer.get(c.id) || []).sort((a,b) => a.date.localeCompare(b.date))
       };
-      if (!merged.has(remoteData.id)) merged.set(remoteData.id, remoteData);
+      const current = merged.get(remoteData.id);
+      if (!current || Date.parse(remoteData.updatedAt || 0) > Date.parse(current.updatedAt || 0)) merged.set(remoteData.id, remoteData);
     }
     window.OilApp.setData(Array.from(merged.values()));
     write(DELETED_KEY, []);
