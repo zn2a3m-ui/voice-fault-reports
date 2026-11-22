@@ -77,7 +77,7 @@ jobs:
           from pathlib import Path
           gradle = Path("android/app/build.gradle")
           s = gradle.read_text()
-          s, count = re.subn(r'(?m)^(\s*versionCode\s*)\\d+', lambda m: m.group(1) + os.environ["BUILD_NUMBER"], s, count=1)
+          s, count = re.subn(r'(?m)^(\s*versionCode\s*)\d+', lambda m: m.group(1) + os.environ["BUILD_NUMBER"], s, count=1)
           if count != 1:
               raise SystemExit("Unable to set Android versionCode")
           s = re.sub(r'(?m)^(\s*versionName\s*")([^"]*)(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(3), s, count=1)
