@@ -12,7 +12,7 @@ create table if not exists public.oil_customers (
   auto_whatsapp_reminders boolean not null default false,
   created_at timestamptz not null default now(),
   constraint oil_customers_phone_e164_chk
-    check (phone_e164 is null or phone_e164 ~ '^\\+[1-9][0-9]{7,14}$'),
+    check (phone_e164 is null or phone_e164 ~ '^\+[1-9][0-9]{7,14}$'),
   constraint oil_customers_reminder_consent_chk
     check (not auto_whatsapp_reminders or
       (whatsapp_opt_in and opt_in_at is not null and phone_e164 is not null)),
