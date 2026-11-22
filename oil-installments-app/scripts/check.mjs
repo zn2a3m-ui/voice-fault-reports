@@ -14,7 +14,7 @@ for(const s of ['enable row level security','auth.uid()','oil_whatsapp_reminder_
 const sync=readFileSync(new URL('../www/supabase-sync.js',import.meta.url),'utf8');
 const syncCheck=spawnSync(process.execPath,['--check','-'],{input:sync,encoding:'utf8'});
 if(syncCheck.status!==0){process.stderr.write(syncCheck.stderr);process.exit(syncCheck.status||1)}
-for(const s of ['grant_type=password','oil_customers','oil_installments','DELETED_KEY','refresh_token','service_role'])if(!sync.includes(s))throw Error('Missing cloud sync safeguard: '+s);
+for(const s of ['grant_type=password','resend?redirect_to=','recover?redirect_to=','cloudResend','cloudForgot','cloudPasswordSave','appUrlOpen','oil_customers','oil_installments','DELETED_KEY','refresh_token','service_role'])if(!sync.includes(s))throw Error('Missing cloud sync safeguard: '+s);
 const syncSql=readFileSync(new URL('../supabase/sql/local-first-sync.sql',import.meta.url),'utf8');
 for(const s of ['local_id','sale_data','updated_at','authenticated','enable row level security'])if(!syncSql.toLowerCase().includes(s.toLowerCase()) && s!=='enable row level security')throw Error('Missing sync schema element: '+s);
 if(!h.includes('supabase-sync.js')||!h.includes('window.OilApp'))throw Error('Missing app sync bridge');
