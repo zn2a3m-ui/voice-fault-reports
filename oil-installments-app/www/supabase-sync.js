@@ -29,6 +29,7 @@
         const expiresIn = Number(params.get("expires_in") || 3600);
         saveSession({ access_token: access, refresh_token: refresh, expires_in: expiresIn, expires_at: Math.floor(Date.now()/1000) + expiresIn });
         if (params.get("type") === "recovery") {
+          $("cloudNewPasswordLabel")?.classList.remove("hidden");
           $("cloudNewPassword")?.classList.remove("hidden");
           $("cloudPasswordSave")?.classList.remove("hidden");
           status("تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة أدناه.");
@@ -168,6 +169,11 @@
   };
   document.addEventListener("DOMContentLoaded", () => {
     paint();
+    const appPlugin = window.Capacitor?.Plugins?.App;
+    if (appPlugin?.addListener) {
+      appPlugin.addListener("appUrlOpen", event => handleAuthCallback(event?.url || ""));
+      appPlugin.getLaunchUrl?.().then(result => { if (result?.url) handleAuthCallback(result.url); }).catch(() => {});
+    }
     $("cloudSave")?.addEventListener("click", () => run(async () => {
       const url = $("cloudUrl").value.trim(), key = $("cloudKey").value.trim();
       if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) || key.length < 20) throw new Error("تحقق من رابط Supabase والمفتاح العام");
@@ -203,6 +209,7 @@
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.msg || out.message || "تعذر تحديث كلمة المرور");
       $("cloudNewPassword").value = "";
+      $("cloudNewPasswordLabel").classList.add("hidden");
       $("cloudNewPassword").classList.add("hidden");
       $("cloudPasswordSave").classList.add("hidden");
       status("تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول بها الآن.");
