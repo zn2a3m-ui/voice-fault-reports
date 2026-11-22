@@ -161,28 +161,27 @@ jobs:
           test -s "$RES/mipmap-xxxhdpi/ic_launcher.png"
       - name: Configure email-confirmation deep link
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p = Path("android/app/src/main/AndroidManifest.xml")
           s = p.read_text()
-          marker = 'android:scheme="daftaralzait"'
-          if marker not in s:
-              intent = """\n            <intent-filter android:autoVerify="false">
+          if 'android:scheme="daftaralzait"' not in s:
+              intent = """
+                      <intent-filter android:autoVerify="false">
                           <action android:name="android.intent.action.VIEW" />
                           <category android:name="android.intent.category.DEFAULT" />
                           <category android:name="android.intent.category.BROWSABLE" />
                           <data android:scheme="daftaralzait" android:host="auth" android:path="/callback" />
-                      </intent-filter>"""
-              import re
-              match = re.search(r'(<activity\\b[^>]*android:name="[^"]*MainActivity"[^>]*>)', s)
+                      </intent-filter>
+              """
+              match = re.search(r'(<activity\b[^>]*android:name="[^"]*MainActivity"[^>]*>)', s)
               if not match:
                   raise SystemExit("MainActivity declaration not found for auth deep link")
-              start = match.end()
-              close = s.find("</activity>", start)
+              close = s.find("</activity>", match.end())
               if close < 0:
                   raise SystemExit("MainActivity closing tag not found")
-              s = s[:close] + intent + "\\n        " + s[close:]
+              s = s[:close] + intent + s[close:]
               p.write_text(s)
           PY
       - name: Create stable debug signing key when needed
