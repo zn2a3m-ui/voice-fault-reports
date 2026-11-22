@@ -7,6 +7,12 @@ on:
     paths:
       - "oil-installments-app/**"
       - ".github/workflows/oil-installments-android.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "oil-installments-app/**"
+      - ".github/workflows/oil-installments-android.yml"
   workflow_dispatch:
 
 permissions:
