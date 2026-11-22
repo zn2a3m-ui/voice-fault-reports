@@ -41,7 +41,7 @@ function todayInAmman(): string {
 function amountText(value: unknown): string {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid installment amount");
-  return amount.toFixed(2).replace(/\\.00$/, "");
+  return amount.toFixed(2).replace(/\.00$/, "");
 }
 
 Deno.serve(async (req: Request) => {
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
     const apiVersion = required("WHATSAPP_API_VERSION");
     const templateName = required("WHATSAPP_TEMPLATE_NAME");
     const templateLanguage = required("WHATSAPP_TEMPLATE_LANGUAGE");
-    const base = url.replace(/\\/$/, "");
+    const base = url.replace(/\/$/, "");
     const headers: Record<string, string> = {
       apikey: key,
       "Content-Type": "application/json",
@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
         ? installment.customer[0]
         : installment.customer;
       const phone = String(customer?.phone_e164 ?? "");
-      if (!customer || !/^\\+[1-9][0-9]{7,14}$/.test(phone) ||
+      if (!customer || !/^\+[1-9][0-9]{7,14}$/.test(phone) ||
           customer.whatsapp_opt_in !== true || customer.auto_whatsapp_reminders !== true ||
           !customer.opt_in_at) {
         skipped++;
