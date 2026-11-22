@@ -1,6 +1,7 @@
 -- Run only after deploying the Edge Function and creating these Vault secrets:
 -- oil_project_url      = https://<dedicated-project-ref>.supabase.co
 -- oil_reminder_cron_secret = same random value as OIL_REMINDER_CRON_SECRET
+-- oil_supabase_secret_key = the project's Supabase secret API key (not publishable)
 --
 -- This schedule runs at 06:00 UTC (09:00 in Amman, UTC+3).
 -- Do not put the cron secret or Meta token directly in this SQL file.
@@ -17,6 +18,7 @@ select cron.schedule(
         || '/functions/v1/send-oil-installment-reminders',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
+        'apikey', (select decrypted_secret from vault.decrypted_secrets where name = 'oil_supabase_secret_key'),
         'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'oil_reminder_cron_secret')
       ),
       body := jsonb_build_object('source', 'pg_cron'),
