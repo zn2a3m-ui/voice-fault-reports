@@ -136,17 +136,17 @@ jobs:
       - name: Apply olive branch Android launcher icon
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
+          sudo apt-get install -y librsvg2-bin
           RES="android/app/src/main/res"
-          mkdir -p "$RES/drawable" 
-          convert www/olive-icon.svg -background none -resize 432x432 "$RES/drawable/ic_launcher_foreground.png"
+          mkdir -p "$RES/drawable"
+          rsvg-convert --width=432 --height=432 www/olive-icon.svg --output="$RES/drawable/ic_launcher_foreground.png"
           # Capacitor ships a same-named v24 vector foreground that overrides the PNG on Android 7+.
           # Remove it so the adaptive launcher icon actually uses our olive-branch artwork.
           rm -f "$RES/drawable-v24/ic_launcher_foreground.xml" "$RES/drawable-v24/\$ic_launcher_foreground__0.xml"
           for spec in "ldpi 36" "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
             set -- $spec
             mkdir -p "$RES/mipmap-$1"
-            convert www/olive-icon.svg -background none -resize "$2x$2" "$RES/mipmap-$1/ic_launcher.png"
+            rsvg-convert --width="$2" --height="$2" www/olive-icon.svg --output="$RES/mipmap-$1/ic_launcher.png"
             cp "$RES/mipmap-$1/ic_launcher.png" "$RES/mipmap-$1/ic_launcher_round.png"
           done
           mkdir -p "$RES/values" "$RES/mipmap-anydpi-v26"
