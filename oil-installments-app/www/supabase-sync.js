@@ -28,12 +28,18 @@
       if (access && refresh) {
         const expiresIn = Number(params.get("expires_in") || 3600);
         saveSession({ access_token: access, refresh_token: refresh, expires_in: expiresIn, expires_at: Math.floor(Date.now()/1000) + expiresIn });
-        status("تم تأكيد البريد وتفعيل الحساب. يمكنك الآن تسجيل الدخول أو المزامنة.");
+        if (params.get("type") === "recovery") {
+          $("cloudNewPassword")?.classList.remove("hidden");
+          $("cloudPasswordSave")?.classList.remove("hidden");
+          status("تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة أدناه.");
+        } else {
+          status("تم تأكيد البريد وتفعيل الحساب. يمكنك الآن تسجيل الدخول أو المزامنة.");
+        }
         paint();
         return true;
       }
       const error = params.get("error_description") || url.searchParams.get("error_description");
-      if (error) status("تعذر تأكيد البريد: " + decodeURIComponent(error), true);
+      if (error) status("تعذر إكمال الطلب: " + error.replace(/\+/g, " "), true);
     } catch (_) {}
     return false;
   }
@@ -168,9 +174,35 @@
       if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
       const email = $("cloudEmail").value.trim(), password = $("cloudPassword").value;
       if (!email || password.length < 8) throw new Error("أدخل البريد وكلمة مرور من 8 أحرف على الأقل");
-      const out = await authRequest("signup", { email, password, options: { emailRedirectTo: "daftaralzait://auth/callback" } });
+      const out = await authRequest("signup?redirect_to=" + encodeURIComponent("daftaralzait://auth/callback"), { email, password });
       if (out.access_token) saveSession(out);
-      else status("تم إنشاء الطلب. افحص بريدك لتأكيد الحساب، ثم سجّل الدخول.");
+      else status("تم إرسال طلب إنشاء الحساب. افحص البريد الوارد والرسائل غير المرغوب فيها، أو استخدم زر إعادة إرسال رسالة التأكيد.");
+    }));
+    $("cloudResend")?.addEventListener("click", () => run(async () => {
+      if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
+      const email = $("cloudEmail").value.trim();
+      if (!email) throw new Error("أدخل البريد الإلكتروني أولاً");
+      await authRequest("resend?redirect_to=" + encodeURIComponent("daftaralzait://auth/callback"), { type: "signup", email });
+      status("إذا كان الحساب غير مؤكّد، أُرسل طلب إعادة رسالة التأكيد. افحص الوارد والرسائل غير المرغوب فيها.");
+    }));
+    $("cloudForgot")?.addEventListener("click", () => run(async () => {
+      if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
+      const email = $("cloudEmail").value.trim();
+      if (!email) throw new Error("أدخل البريد الإلكتروني أولاً");
+      await authRequest("recover?redirect_to=" + encodeURIComponent("daftaralzait://auth/callback"), { email });
+      status("إذا كان البريد مسجلاً، ستصلك رسالة استعادة كلمة المرور. افحص الوارد والرسائل غير المرغوب فيها.");
+    }));
+    $("cloudPasswordSave")?.addEventListener("click", () => run(async () => {
+      const password = $("cloudNewPassword").value;
+      if (password.length < 8) throw new Error("كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل");
+      const s = await validSession();
+      const res = await fetch(baseUrl() + "/auth/v1/user", { method: "PUT", headers: headers(s.access_token), body: JSON.stringify({ password }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.msg || out.message || "تعذر تحديث كلمة المرور");
+      $("cloudNewPassword").value = "";
+      $("cloudNewPassword").classList.add("hidden");
+      $("cloudPasswordSave").classList.add("hidden");
+      status("تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول بها الآن.");
     }));
     $("cloudLogin")?.addEventListener("click", () => run(async () => {
       if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
