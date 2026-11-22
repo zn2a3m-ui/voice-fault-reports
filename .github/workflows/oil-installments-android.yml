@@ -140,6 +140,9 @@ jobs:
           RES="android/app/src/main/res"
           mkdir -p "$RES/drawable" 
           convert www/olive-icon.svg -background none -resize 432x432 "$RES/drawable/ic_launcher_foreground.png"
+          # Capacitor ships a same-named v24 vector foreground that overrides the PNG on Android 7+.
+          # Remove it so the adaptive launcher icon actually uses our olive-branch artwork.
+          rm -f "$RES/drawable-v24/ic_launcher_foreground.xml" "$RES/drawable-v24/\$ic_launcher_foreground__0.xml"
           for spec in "ldpi 36" "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
             set -- $spec
             mkdir -p "$RES/mipmap-$1"
