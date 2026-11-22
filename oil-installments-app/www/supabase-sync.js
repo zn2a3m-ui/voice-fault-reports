@@ -9,7 +9,8 @@
   const $ = (id) => document.getElementById(id);
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; } };
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-  const config = () => read(CONFIG_KEY, { url: "", key: "" });
+  const DEFAULT_CONFIG = { url: "https://ebhdliuohsadcantszcf.supabase.co", key: "sb_publishable_y2oVragqvRT9UEI0EwfQCw_bOH9BItn" };
+  const config = () => { const saved = read(CONFIG_KEY, {}); return { url: saved.url || DEFAULT_CONFIG.url, key: saved.key || DEFAULT_CONFIG.key }; };
   const session = () => read(SESSION_KEY, null);
   const baseUrl = () => config().url.replace(/\/+$/, "");
   const headers = (token) => ({ apikey: config().key, Authorization: "Bearer " + token, "Content-Type": "application/json" });
