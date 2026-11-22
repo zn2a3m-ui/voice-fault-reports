@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: daftar-al-zait-android-build
+  group: daftar-al-zait-android-build-olive-auth-fix
   cancel-in-progress: false
 
 jobs:
