@@ -47,7 +47,7 @@
     const c = config();
     const res = await fetch(baseUrl() + "/auth/v1/" + path, { method: "POST", headers: { apikey: c.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(out.msg || out.message || out.error_description || out.error || "تعذر الاتصال بخدمة الحسابات");
+    if (!res.ok) {\n      if (out.code === "over_email_send_rate_limit" || res.status === 429) throw new Error("تم طلب رسائل كثيرة خلال وقت قصير. انتظر دقيقة على الأقل قبل إعادة المحاولة؛ خدمة البريد المجانية محدودة أيضاً بعدد قليل من الرسائل في الساعة.");\n      throw new Error(out.msg || out.message || out.error_description || out.error || "تعذر الاتصال بخدمة الحسابات");\n    }
     return out;
   }
   function saveSession(s) {
