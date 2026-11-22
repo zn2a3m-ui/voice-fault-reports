@@ -146,9 +146,45 @@ jobs:
             convert www/olive-icon.svg -background none -resize "$2x$2" "$RES/mipmap-$1/ic_launcher.png"
             cp "$RES/mipmap-$1/ic_launcher.png" "$RES/mipmap-$1/ic_launcher_round.png"
           done
-          if [ -f "$RES/mipmap-anydpi-v26/ic_launcher.xml" ]; then
-            sed -i 's#@drawable/ic_launcher_foreground#@drawable/ic_launcher_foreground#g' "$RES/mipmap-anydpi-v26/ic_launcher.xml"
-          fi
+          mkdir -p "$RES/values" "$RES/mipmap-anydpi-v26"
+          cat > "$RES/values/olive_launcher_background.xml" <<'XML'
+          <resources><color name="olive_launcher_background">#F4EEDB</color></resources>
+          XML
+          cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'XML'
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/olive_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          XML
+          cp "$RES/mipmap-anydpi-v26/ic_launcher.xml" "$RES/mipmap-anydpi-v26/ic_launcher_round.xml"
+          # Keep the legacy bitmap launcher icons in every density for older Android launchers.
+          test -s "$RES/mipmap-xxxhdpi/ic_launcher.png"
+      - name: Configure email-confirmation deep link
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          marker = 'android:scheme="daftaralzait"'
+          if marker not in s:
+              intent = """\n            <intent-filter android:autoVerify="false">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="daftaralzait" android:host="auth" android:path="/callback" />
+                      </intent-filter>"""
+              import re
+              match = re.search(r'(<activity\\b[^>]*android:name="[^"]*MainActivity"[^>]*>)', s)
+              if not match:
+                  raise SystemExit("MainActivity declaration not found for auth deep link")
+              start = match.end()
+              close = s.find("</activity>", start)
+              if close < 0:
+                  raise SystemExit("MainActivity closing tag not found")
+              s = s[:close] + intent + "\\n        " + s[close:]
+              p.write_text(s)
+          PY
       - name: Create stable debug signing key when needed
         uses: actions/cache@v4
         id: debug-keystore
