@@ -245,7 +245,22 @@ jobs:
           PY
       - name: Build installable APK
         working-directory: oil-installments-app/android
-        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+        run: |
+          chmod +x gradlew
+          # Maven Central can temporarily rate-limit fresh Android builds (HTTP 429).
+          # Retry the exact build with backoff; fail only after repeated attempts.
+          for attempt in 1 2 3 4; do
+            if ./gradlew --no-daemon --refresh-dependencies assembleDebug; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              wait_seconds=$((attempt * 30))
+              echo "Gradle dependency/build attempt $attempt failed; retrying in ${wait_seconds}s."
+              sleep "$wait_seconds"
+            fi
+          done
+          echo "Android APK build failed after 4 attempts." >&2
+          exit 1
       - name: Verify APK
         working-directory: oil-installments-app
         run: |
