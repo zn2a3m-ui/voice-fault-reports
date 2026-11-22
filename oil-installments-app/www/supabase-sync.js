@@ -19,6 +19,24 @@
     if (el) { el.textContent = message; el.style.color = error ? "var(--red)" : "var(--muted)"; }
   };
   const configured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(baseUrl()) && /^sb_publishable_[A-Za-z0-9_-]+$/.test(config().key) || /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(baseUrl()) && config().key.length > 20;
+  function handleAuthCallback(rawUrl) {
+    try {
+      const url = new URL(rawUrl);
+      const params = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const access = params.get("access_token");
+      const refresh = params.get("refresh_token");
+      if (access && refresh) {
+        const expiresIn = Number(params.get("expires_in") || 3600);
+        saveSession({ access_token: access, refresh_token: refresh, expires_in: expiresIn, expires_at: Math.floor(Date.now()/1000) + expiresIn });
+        status("تم تأكيد البريد وتفعيل الحساب. يمكنك الآن تسجيل الدخول أو المزامنة.");
+        paint();
+        return true;
+      }
+      const error = params.get("error_description") || url.searchParams.get("error_description");
+      if (error) status("تعذر تأكيد البريد: " + decodeURIComponent(error), true);
+    } catch (_) {}
+    return false;
+  }
   async function authRequest(path, body) {
     const c = config();
     const res = await fetch(baseUrl() + "/auth/v1/" + path, { method: "POST", headers: { apikey: c.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -150,7 +168,7 @@
       if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
       const email = $("cloudEmail").value.trim(), password = $("cloudPassword").value;
       if (!email || password.length < 8) throw new Error("أدخل البريد وكلمة مرور من 8 أحرف على الأقل");
-      const out = await authRequest("signup", { email, password });
+      const out = await authRequest("signup", { email, password, options: { emailRedirectTo: "daftaralzait://auth/callback" } });
       if (out.access_token) saveSession(out);
       else status("تم إنشاء الطلب. افحص بريدك لتأكيد الحساب، ثم سجّل الدخول.");
     }));
