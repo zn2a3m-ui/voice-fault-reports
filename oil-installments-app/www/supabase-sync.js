@@ -115,7 +115,7 @@
         inst: (byCustomer.get(c.id) || []).sort((a,b) => a.date.localeCompare(b.date))
       };
       const current = merged.get(remoteData.id);
-      if (!current || Date.parse(remoteData.updatedAt || 0) > Date.parse(current.updatedAt || 0)) merged.set(remoteData.id, remoteData);
+      if (!current || (remoteData.updatedAt ? Date.parse(remoteData.updatedAt) : 0) > (current.updatedAt ? Date.parse(current.updatedAt) : 0)) merged.set(remoteData.id, remoteData);
     }
     window.OilApp.setData(Array.from(merged.values()));
     write(DELETED_KEY, []);
@@ -143,7 +143,7 @@
     $("cloudSave")?.addEventListener("click", () => run(async () => {
       const url = $("cloudUrl").value.trim(), key = $("cloudKey").value.trim();
       if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) || key.length < 20) throw new Error("تحقق من رابط Supabase والمفتاح العام");
-      write(CONFIG_KEY, { url, key }); status("تم حفظ إعداد الاتصال على هذا الجهاز.");
+      const previous = config(); if (previous.url !== url || previous.key !== key) localStorage.removeItem(SESSION_KEY); write(CONFIG_KEY, { url, key }); status("تم حفظ إعداد الاتصال على هذا الجهاز.");
     }));
     $("cloudSignup")?.addEventListener("click", () => run(async () => {
       if (!configured()) throw new Error("احفظ إعداد الاتصال أولاً");
