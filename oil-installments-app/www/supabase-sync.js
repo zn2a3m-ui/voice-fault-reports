@@ -19,7 +19,7 @@
     if (el) { el.textContent = message; el.style.color = error ? "var(--red)" : "var(--muted)"; }
   };
   const configured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(baseUrl()) && /^sb_publishable_[A-Za-z0-9_-]+$/.test(config().key) || /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(baseUrl()) && config().key.length > 20;
-  function handleAuthCallback(rawUrl) {
+  async function handleAuthCallback(rawUrl) {
     try {
       const url = new URL(rawUrl);
       const params = new URLSearchParams(url.hash.replace(/^#/, ""));
@@ -27,7 +27,9 @@
       const refresh = params.get("refresh_token");
       if (access && refresh) {
         const expiresIn = Number(params.get("expires_in") || 3600);
-        saveSession({ access_token: access, refresh_token: refresh, expires_in: expiresIn, expires_at: Math.floor(Date.now()/1000) + expiresIn });
+        const userResponse = await fetch(baseUrl() + "/auth/v1/user", { headers: { apikey: config().key, Authorization: "Bearer " + access } });
+        const user = userResponse.ok ? await userResponse.json().catch(() => null) : null;
+        saveSession({ access_token: access, refresh_token: refresh, expires_in: expiresIn, expires_at: Math.floor(Date.now()/1000) + expiresIn, user });
         if (params.get("type") === "recovery") {
           $("cloudNewPasswordLabel")?.classList.remove("hidden");
           $("cloudNewPassword")?.classList.remove("hidden");
@@ -171,8 +173,8 @@
     paint();
     const appPlugin = window.Capacitor?.Plugins?.App;
     if (appPlugin?.addListener) {
-      appPlugin.addListener("appUrlOpen", event => handleAuthCallback(event?.url || ""));
-      appPlugin.getLaunchUrl?.().then(result => { if (result?.url) handleAuthCallback(result.url); }).catch(() => {});
+      appPlugin.addListener("appUrlOpen", event => { handleAuthCallback(event?.url || "").catch(() => status("تعذر إكمال تسجيل الدخول من الرابط. افتح التطبيق وحاول مرة أخرى.", true)); });
+      appPlugin.getLaunchUrl?.().then(result => { if (result?.url) return handleAuthCallback(result.url); }).catch(() => status("تعذر قراءة رابط التفعيل.", true));
     }
     $("cloudSave")?.addEventListener("click", () => run(async () => {
       const url = $("cloudUrl").value.trim(), key = $("cloudKey").value.trim();
