@@ -1,0 +1,13 @@
+{
+  "appId": "com.zn2a3m.oilinstallments",
+  "appName": "دفتر الزيت",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

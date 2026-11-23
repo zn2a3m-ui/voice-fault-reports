@@ -1,0 +1,298 @@
+name: Build Daftar Al-Zait Android APK
+
+on:
+  push:
+    branches:
+      - feature/oil-installments-android
+    paths:
+      - "oil-installments-app/**"
+      - ".github/workflows/oil-installments-android.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "oil-installments-app/**"
+      - ".github/workflows/oil-installments-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daftar-al-zait-android-build-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: oil-installments-app
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+    steps:
+      - name: Checkout isolated project branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run app and cloud-sync checks
+        run: npm run check
+      - name: Add native Android project
+        run: npx cap add android
+      - name: Synchronize Capacitor assets
+        run: npx cap sync android
+      - name: Add native Android contact picker
+        run: |
+          PKG="android/app/src/main/java/com/zn2a3m/oilinstallments"
+          mkdir -p "$PKG"
+          cat > "$PKG/ContactsPickerPlugin.java" <<'JAVA'
+          package com.zn2a3m.oilinstallments;
+
+          import android.content.Intent;
+          import android.database.Cursor;
+          import android.net.Uri;
+          import android.provider.ContactsContract;
+          import androidx.activity.result.ActivityResult;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.ActivityCallback;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "ContactsPicker")
+          public class ContactsPickerPlugin extends Plugin {
+              @PluginMethod
+              public void pickContact(PluginCall call) {
+                  Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+                  startActivityForResult(call, intent, "contactPicked");
+              }
+
+              @ActivityCallback
+              private void contactPicked(PluginCall call, ActivityResult result) {
+                  if (call == null) return;
+                  if (result.getResultCode() != android.app.Activity.RESULT_OK || result.getData() == null) {
+                      JSObject cancelled = new JSObject();
+                      cancelled.put("cancelled", true);
+                      call.resolve(cancelled);
+                      return;
+                  }
+                  Uri uri = result.getData().getData();
+                  if (uri == null) {
+                      call.reject("لم يتم اختيار جهة اتصال");
+                      return;
+                  }
+                  Cursor cursor = getContext().getContentResolver().query(uri,
+                      new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER},
+                      null, null, null);
+                  if (cursor == null) {
+                      call.reject("تعذر قراءة جهة الاتصال المختارة");
+                      return;
+                  }
+                  try {
+                      if (cursor.moveToFirst()) {
+                          JSObject contact = new JSObject();
+                          contact.put("name", cursor.getString(0));
+                          contact.put("phone", cursor.getString(1));
+                          contact.put("cancelled", false);
+                          call.resolve(contact);
+                      } else {
+                          call.reject("جهة الاتصال لا تحتوي على رقم هاتف");
+                      }
+                  } finally {
+                      cursor.close();
+                  }
+              }
+          }
+          JAVA
+          MAIN="$PKG/MainActivity.java"
+          if [ ! -f "$MAIN" ]; then
+            echo "Capacitor MainActivity.java was not found" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/java/com/zn2a3m/oilinstallments/MainActivity.java")
+          s = p.read_text()
+          if "registerPlugin(ContactsPickerPlugin.class)" not in s:
+              s = s.replace("public class MainActivity extends BridgeActivity {", "public class MainActivity extends BridgeActivity {\n    @Override\n    public void onCreate(android.os.Bundle savedInstanceState) {\n        registerPlugin(ContactsPickerPlugin.class);\n        super.onCreate(savedInstanceState);\n    }")
+          p.write_text(s)
+          PY
+      - name: Apply olive branch Android launcher icon
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+          RES="android/app/src/main/res"
+          mkdir -p "$RES/drawable"
+          rsvg-convert --width=432 --height=432 www/olive-icon.svg --output="$RES/drawable/ic_launcher_foreground.png"
+          # Capacitor ships a same-named v24 vector foreground that overrides the PNG on Android 7+.
+          # Remove it so the adaptive launcher icon actually uses our olive-branch artwork.
+          rm -f "$RES/drawable-v24/ic_launcher_foreground.xml" "$RES/drawable-v24/\$ic_launcher_foreground__0.xml"
+          for spec in "ldpi 36" "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
+            set -- $spec
+            mkdir -p "$RES/mipmap-$1"
+            rsvg-convert --width="$2" --height="$2" www/olive-icon.svg --output="$RES/mipmap-$1/ic_launcher.png"
+            cp "$RES/mipmap-$1/ic_launcher.png" "$RES/mipmap-$1/ic_launcher_round.png"
+          done
+          mkdir -p "$RES/values" "$RES/mipmap-anydpi-v26"
+          cat > "$RES/values/olive_launcher_background.xml" <<'XML'
+          <resources><color name="olive_launcher_background">#F4EEDB</color></resources>
+          XML
+          cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'XML'
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/olive_launcher_background"/>
+              <foreground android:drawable="@drawable/ic_launcher_foreground"/>
+          </adaptive-icon>
+          XML
+          cp "$RES/mipmap-anydpi-v26/ic_launcher.xml" "$RES/mipmap-anydpi-v26/ic_launcher_round.xml"
+          # Keep the legacy bitmap launcher icons in every density for older Android launchers.
+          test -s "$RES/mipmap-xxxhdpi/ic_launcher.png"
+      - name: Configure email-confirmation deep link
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          if 'android:scheme="daftaralzait"' not in s:
+              intent = """
+                      <intent-filter android:autoVerify="false">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="daftaralzait" android:host="auth" android:path="/callback" />
+                      </intent-filter>
+              """
+              match = re.search(r'(<activity\b[^>]*android:name="[^"]*MainActivity"[^>]*>)', s)
+              if not match:
+                  raise SystemExit("MainActivity declaration not found for auth deep link")
+              close = s.find("</activity>", match.end())
+              if close < 0:
+                  raise SystemExit("MainActivity closing tag not found")
+              s = s[:close] + intent + s[close:]
+              p.write_text(s)
+          PY
+      - name: Create stable debug signing key when needed
+        uses: actions/cache@v4
+        id: debug-keystore
+        with:
+          path: ~/.android/debug.keystore
+          key: daftar-al-zait-debug-keystore-v1
+          save-always: true
+      - name: Generate debug signing key
+        if: steps.debug-keystore.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Daftar Al-Zait,O=Daftar Al-Zait,C=JO" -keyalg RSA -keysize 2048 -validity 10000
+      - name: Set app version and permissions
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          gradle = Path("android/app/build.gradle")
+          s = gradle.read_text()
+          s, count = re.subn(r'(?m)^(\s*versionCode\s*)\d+', lambda m: m.group(1) + os.environ["BUILD_NUMBER"], s, count=1)
+          if count != 1:
+              raise SystemExit("Unable to set Android versionCode")
+          s = re.sub(r'(?m)^(\s*versionName\s*")([^"]*)(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(3), s, count=1)
+          gradle.write_text(s)
+          html = Path("www/index.html")
+          page = html.read_text()
+          page, version_count = re.subn(r'(<meta name="app-version" content=")[^"]*(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(2), page, count=1)
+          if version_count != 1:
+              raise SystemExit("Unable to stamp app version into web assets")
+          html.write_text(page)
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          xml = manifest.read_text()
+          pos = xml.find(">")
+          if pos < 0:
+              raise SystemExit("Android manifest is invalid")
+          for permission in ("android.permission.INTERNET",):
+              line = f'\n    <uses-permission android:name="{permission}" />'
+              if f'android:name="{permission}"' not in xml:
+                  xml = xml[:pos+1] + line + xml[pos+1:]
+          manifest.write_text(xml)
+          PY
+      - name: Refresh Android web assets with stamped version
+        run: npx cap copy android
+      - name: Restore stable signing key and pin debug signing
+        run: |
+          mkdir -p android/app
+          cp "$HOME/.android/debug.keystore" android/app/debug.keystore
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/build.gradle")
+          s = p.read_text()
+          block = """android {
+              signingConfigs {
+                  debug {
+                      storeFile file("debug.keystore")
+                      storePassword "android"
+                      keyAlias "androiddebugkey"
+                      keyPassword "android"
+                  }
+              }
+          """
+          if 'storeFile file("debug.keystore")' not in s:
+              s = s.replace("android {", block, 1)
+          p.write_text(s)
+          PY
+      - name: Build installable APK
+        working-directory: oil-installments-app/android
+        run: |
+          chmod +x gradlew
+          # Maven Central can temporarily rate-limit fresh Android builds (HTTP 429).
+          # Retry the exact build with backoff; fail only after repeated attempts.
+          for attempt in 1 2 3 4; do
+            if ./gradlew --no-daemon --refresh-dependencies assembleDebug; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              wait_seconds=$((attempt * 30))
+              echo "Gradle dependency/build attempt $attempt failed; retrying in ${wait_seconds}s."
+              sleep "$wait_seconds"
+            fi
+          done
+          echo "Android APK build failed after 4 attempts." >&2
+          exit 1
+      - name: Verify APK
+        working-directory: oil-installments-app
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -q "com.zn2a3m.oilinstallments"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
+      - name: Publish APK release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: daftar-al-zait-v1.0.${{ github.run_number }}
+          name: دفتر الزيت Android v1.0.${{ github.run_number }}
+          prerelease: true
+          files: oil-installments-app/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: daftar-al-zait-android-debug
+          path: oil-installments-app/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+# Rebuild after embedding the installed app version for reliable update checks.

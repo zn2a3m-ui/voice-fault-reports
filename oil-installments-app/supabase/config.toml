@@ -1,0 +1,4 @@
+# Supabase local/deployment configuration for دفتر الزيت.
+# The worker validates OIL_REMINDER_CRON_SECRET itself; do not expose it to clients.
+[functions.send-oil-installment-reminders]
+verify_jwt = false
