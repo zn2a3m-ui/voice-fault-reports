@@ -292,3 +292,5 @@ jobs:
           path: oil-installments-app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+# Rebuild after embedding the installed app version for reliable update checks.
