@@ -88,7 +88,7 @@
       throw new Error(out.message || out.details || "تعذر التحقق من عدد الزبائن في السحابة");
     }
     const range = res.headers.get("content-range") || "";
-    const match = range.match(/\\/(\\d+)$/);
+    const match = range.match(/\/(\d+)$/);
     if (match) return Number(match[1]);
     const rows = await res.json().catch(() => null);
     if (Array.isArray(rows)) return rows.length;
