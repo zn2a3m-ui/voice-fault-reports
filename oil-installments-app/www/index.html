@@ -35,7 +35,47 @@ const RELEASES_API="https://api.github.com/repos/zn2a3m-ui/voice-fault-reports/r
 let latestApkUrl="";
 function versionParts(v){const m=String(v||"").match(/(\d+)\.(\d+)\.(\d+)/);return m?m.slice(1).map(Number):null}
 function compareVersions(a,b){for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]-b[i]}return 0}
-$("checkUpdates").onclick=async()=>{const b=$("checkUpdates"),st=$("updateStatus"),dl=$("installUpdate");b.disabled=true;st.textContent="جارٍ فحص النسخة المثبتة والبحث عن تحديث...";dl.classList.add("hidden");latestApkUrl="";let timer;const controller=new AbortController();try{const installedVersion=document.querySelector('meta[name="app-version"]')?.content;const installed=versionParts(installedVersion);if(!installed)throw Error("تعذر قراءة رقم النسخة المثبتة داخل التطبيق.");timer=setTimeout(()=>controller.abort(),15000);const res=await fetch(RELEASES_API,{cache:"no-store",signal:controller.signal,headers:{Accept:"application/vnd.github+json","Cache-Control":"no-cache"}});if(!res.ok){if(res.status===403||res.status===429)throw Error("GitHub قيّد طلبات فحص التحديث مؤقتاً (HTTP "+res.status+"). أعد المحاولة بعد قليل.");if(res.status===404)throw Error("لم يعثر GitHub على سجل الإصدارات (HTTP 404).");throw Error("فشل الاتصال بسجل الإصدارات: HTTP "+res.status+".");}let releases;try{releases=await res.json()}catch(_){throw Error("وصل رد غير مفهوم من GitHub؛ تعذر قراءة قائمة الإصدارات.");}if(!Array.isArray(releases))throw Error("صيغة سجل الإصدارات من GitHub غير صحيحة.");const release=releases.filter(r=>!r.draft&&!r.prerelease&&Array.isArray(r.assets)&&r.assets.some(a=>a.name==="app-debug.apk"&&a.browser_download_url)&&versionParts(r.tag_name)).sort((a,b)=>compareVersions(versionParts(b.tag_name),versionParts(a.tag_name)))[0];if(!release)throw Error("لم يتم العثور على إصدار منشور يحتوي ملف APK.");const latest=versionParts(release.tag_name);if(compareVersions(installed,latest)>=0){st.textContent="التطبيق محدث بالفعل ✓ النسخة المثبتة "+installedVersion+" هي آخر نسخة منشورة ("+release.tag_name+").";return}const apk=release.assets.find(a=>a.name==="app-debug.apk");latestApkUrl=apk.browser_download_url;st.textContent="يتوفر تحديث جديد: "+release.tag_name+" — نسختك الحالية "+installedVersion+". نزّل التحديث وثبّته فوق التطبيق الحالي دون حذف التطبيق.";dl.classList.remove("hidden");}catch(e){let reason=e?.name==="AbortError"?"انتهت مهلة الاتصال بـ GitHub بعد 15 ثانية.":e?.message||"خطأ غير معروف أثناء فحص التحديث.";if(e?.name==="TypeError")reason="تعذر على التطبيق الوصول إلى GitHub من داخل التطبيق. تحقق من السماح باتصال التطبيق بالإنترنت ثم أعد المحاولة. ("+e.message+")";st.textContent=reason;}finally{if(timer)clearTimeout(timer);b.disabled=false}};
+async function getReleaseList(){
+  const nativeHttp=window.Capacitor?.Plugins?.CapacitorHttp;
+  if(nativeHttp?.get){
+    const response=await nativeHttp.get({url:RELEASES_API,headers:{Accept:"application/vnd.github+json","Cache-Control":"no-cache"},connectTimeout:15000,readTimeout:15000});
+    if(response.status<200||response.status>=300){
+      if(response.status===403||response.status===429)throw Error("GitHub قيّد طلبات فحص التحديث مؤقتاً (HTTP "+response.status+"). أعد المحاولة بعد قليل.");
+      if(response.status===404)throw Error("لم يعثر GitHub على سجل الإصدارات (HTTP 404).");
+      throw Error("فشل الاتصال بسجل الإصدارات: HTTP "+response.status+".");
+    }
+    return typeof response.data==="string"?JSON.parse(response.data):response.data;
+  }
+  const controller=new AbortController();let timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(RELEASES_API,{cache:"no-store",signal:controller.signal,headers:{Accept:"application/vnd.github+json","Cache-Control":"no-cache"}});
+    if(!response.ok){
+      if(response.status===403||response.status===429)throw Error("GitHub قيّد طلبات فحص التحديث مؤقتاً (HTTP "+response.status+"). أعد المحاولة بعد قليل.");
+      if(response.status===404)throw Error("لم يعثر GitHub على سجل الإصدارات (HTTP 404).");
+      throw Error("فشل الاتصال بسجل الإصدارات: HTTP "+response.status+".");
+    }
+    return await response.json();
+  }finally{clearTimeout(timer)}
+}
+$("checkUpdates").onclick=async()=>{
+  const b=$("checkUpdates"),st=$("updateStatus"),dl=$("installUpdate");b.disabled=true;st.textContent="جارٍ فحص النسخة المثبتة والبحث عن تحديث...";dl.classList.add("hidden");latestApkUrl="";
+  try{
+    const installedVersion=document.querySelector('meta[name="app-version"]')?.content,installed=versionParts(installedVersion);
+    if(!installed)throw Error("تعذر قراءة رقم النسخة المثبتة داخل التطبيق.");
+    const releases=await getReleaseList();
+    if(!Array.isArray(releases))throw Error("صيغة سجل الإصدارات من GitHub غير صحيحة.");
+    const release=releases.filter(r=>!r.draft&&String(r.tag_name||"").startsWith("daftar-al-zait-v1.0.")&&Array.isArray(r.assets)&&r.assets.some(a=>a.name==="app-debug.apk"&&a.browser_download_url)&&versionParts(r.tag_name)).sort((a,b)=>compareVersions(versionParts(b.tag_name),versionParts(a.tag_name)))[0];
+    if(!release)throw Error("لم يتم العثور على إصدار دفتر الزيت المنشور الذي يحتوي ملف APK.");
+    const latest=versionParts(release.tag_name);
+    if(compareVersions(installed,latest)>=0){st.textContent="التطبيق محدث بالفعل ✓ النسخة المثبتة "+installedVersion+" هي آخر نسخة منشورة ("+release.tag_name+").";return}
+    const apk=release.assets.find(a=>a.name==="app-debug.apk");latestApkUrl=apk.browser_download_url;
+    st.textContent="يتوفر تحديث جديد: "+release.tag_name+" — نسختك الحالية "+installedVersion+". نزّل التحديث وثبّته فوق التطبيق الحالي دون حذف التطبيق.";dl.classList.remove("hidden");
+  }catch(e){
+    let reason=e?.name==="AbortError"?"انتهت مهلة الاتصال بـ GitHub بعد 15 ثانية.":e?.message||"خطأ غير معروف أثناء فحص التحديث.";
+    if(e?.name==="TypeError")reason="فشل الاتصال بـ GitHub من داخل التطبيق (Failed to fetch). جرّب شبكة أخرى أو تحقق من اتصال الهاتف.";
+    st.textContent=reason;
+  }finally{b.disabled=false}
+};
 $("installUpdate").onclick=()=>{if(latestApkUrl)window.open(latestApkUrl,"_blank","noopener")};
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));window.OilApp={getData:()=>data,setData:next=>{data=Array.isArray(next)?next:[];data.forEach(s=>savedSnapshots.set(String(s.id),JSON.stringify({...s,updatedAt:undefined})));localStorage.setItem(KEY,JSON.stringify(data));render()},render};render();
 </script><script src="supabase-sync.js"></script></main></body></html>
