@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: daftar-al-zait-android-build-olive-auth-fix
+  group: daftar-al-zait-android-build-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
