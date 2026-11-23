@@ -71,13 +71,22 @@
   }
   async function rest(path, options = {}) {
     const s = await validSession();
-    const res = await fetch(baseUrl() + "/rest/v1/" + path, { ...options, headers: { ...headers(s.access_token), Prefer: "resolution=merge-duplicates,return=minimal", ...(options.headers || {}) } });
+    const method = String(options.method || "GET").toUpperCase();
+    const requestHeaders = { ...headers(s.access_token), ...(options.headers || {}) };
+    if (method !== "GET" && !requestHeaders.Prefer) requestHeaders.Prefer = "resolution=merge-duplicates,return=minimal";
+    const res = await fetch(baseUrl() + "/rest/v1/" + path, { ...options, headers: requestHeaders });
     if (!res.ok) {
       const out = await res.json().catch(() => ({}));
       throw new Error(out.message || out.details || out.hint || "فشلت المزامنة مع قاعدة البيانات");
     }
-    if (res.status === 204 || res.headers.get("content-length") === "0") return null;
-    return res.json().catch(() => null);
+    if (res.status === 204) return null;
+    const body = await res.text().catch(() => "");
+    if (!body.trim()) return method === "GET" ? [] : null;
+    try { return JSON.parse(body); }
+    catch (_) {
+      if (method === "GET") throw new Error("وصل رد السحابة لكن تعذر قراءة بياناته. أعد المزامنة.");
+      return null;
+    }
   }
   async function countRemoteCustomers(owner) {
     const s = await validSession();
