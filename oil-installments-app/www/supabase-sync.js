@@ -79,6 +79,21 @@
     if (res.status === 204 || res.headers.get("content-length") === "0") return null;
     return res.json().catch(() => null);
   }
+  async function countRemoteCustomers(owner) {
+    const s = await validSession();
+    const url = baseUrl() + "/rest/v1/oil_customers?select=id&owner_id=eq." + encodeURIComponent(owner);
+    const res = await fetch(url, { headers: { ...headers(s.access_token), Prefer: "count=exact" } });
+    if (!res.ok) {
+      const out = await res.json().catch(() => ({}));
+      throw new Error(out.message || out.details || "تعذر التحقق من عدد الزبائن في السحابة");
+    }
+    const range = res.headers.get("content-range") || "";
+    const match = range.match(/\\/(\\d+)$/);
+    if (match) return Number(match[1]);
+    const rows = await res.json().catch(() => null);
+    if (Array.isArray(rows)) return rows.length;
+    throw new Error("تم الحفظ، لكن تعذر التحقق من العدد الفعلي للزبائن في السحابة. أعد المزامنة.");
+  }
   const e164 = (phone) => {
     let digits = String(phone || "").replace(/\D/g, "");
     if (digits.startsWith("00")) digits = digits.slice(2);
@@ -136,8 +151,11 @@
       rest("oil_customers?select=id,local_id,name,phone_e164,whatsapp_opt_in,opt_in_at,auto_whatsapp_reminders,sale_data&owner_id=eq." + encodeURIComponent(owner)),
       rest("oil_installments?select=customer_id,installment_number,due_date,amount,paid,paid_at&owner_id=eq." + encodeURIComponent(owner) + "&order=installment_number.asc")
     ]);
+    if (!Array.isArray(customers) || !Array.isArray(installments)) {
+      throw new Error("تم إرسال البيانات، لكن تعذر قراءة تأكيد السحابة. أعد المزامنة للتحقق من الحفظ.");
+    }
     const byCustomer = new Map();
-    for (const i of (installments || [])) {
+    for (const i of installments) {
       const list = byCustomer.get(i.customer_id) || [];
       list.push({ date: i.due_date, amt: Number(i.amount), paid: !!i.paid, ...(i.paid_at ? { paidAt: i.paid_at } : {}) });
       byCustomer.set(i.customer_id, list);
@@ -159,8 +177,12 @@
     }
     window.OilApp.setData(Array.from(merged.values()));
     write(DELETED_KEY, []);
-    status("اكتملت المزامنة. بيانات الجهاز والسحابة متوافقة.");
-    return { customers: (customers || []).length };
+    const verifiedCustomerCount = await countRemoteCustomers(owner);
+    if (verifiedCustomerCount < customers.length) {
+      throw new Error("تعذر تأكيد جميع الزبائن في السحابة. العدد الذي أمكن التحقق منه: " + verifiedCustomerCount + ".");
+    }
+    status("اكتملت المزامنة. تم التحقق من " + verifiedCustomerCount + " زبوناً في السحابة.");
+    return { customers: verifiedCustomerCount };
   }
   function paint() {
     const c = config(), s = session();
