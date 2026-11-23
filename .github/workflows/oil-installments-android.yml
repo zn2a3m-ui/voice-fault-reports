@@ -230,6 +230,8 @@ jobs:
                   xml = xml[:pos+1] + line + xml[pos+1:]
           manifest.write_text(xml)
           PY
+      - name: Refresh Android web assets with stamped version
+        run: npx cap copy android
       - name: Restore stable signing key and pin debug signing
         run: |
           mkdir -p android/app
