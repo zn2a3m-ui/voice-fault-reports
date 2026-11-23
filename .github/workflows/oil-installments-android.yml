@@ -215,7 +215,7 @@ jobs:
           gradle.write_text(s)
           html = Path("www/index.html")
           page = html.read_text()
-          page, version_count = re.subn(r'(<meta name="app-version" content=")[^"]*("")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(2), page, count=1)
+          page, version_count = re.subn(r'(<meta name="app-version" content=")[^"]*(")', lambda m: m.group(1) + "1.0." + os.environ["BUILD_NUMBER"] + m.group(2), page, count=1)
           if version_count != 1:
               raise SystemExit("Unable to stamp app version into web assets")
           html.write_text(page)
