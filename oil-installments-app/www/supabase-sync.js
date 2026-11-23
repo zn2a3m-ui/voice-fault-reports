@@ -109,10 +109,19 @@
         sale_data: { phone: customer.phone || "", item: customer.item || "زيت", qty: customer.qty, tank: customer.tank, price: customer.price, down: customer.down, whatsappOptIn: consent, autoReminder: !!customer.autoReminder, whatsappPreferenceUpdatedAt: customer.whatsappPreferenceUpdatedAt || null, updatedAt: localUpdated },
         updated_at: localUpdated
       };
-      if (!remoteIsNewer) await rest("oil_customers?on_conflict=owner_id,local_id", { method: "POST", body: JSON.stringify(row) });
-      const found = await rest("oil_customers?select=id,local_id&owner_id=eq." + encodeURIComponent(owner) + "&local_id=eq." + encodeURIComponent(String(customer.id)));
-      const remote = found && found[0];
-      if (!remote) throw new Error("تعذر تأكيد حفظ بيانات أحد الزبائن");
+      let remote;
+      if (!remoteIsNewer) {
+        const saved = await rest("oil_customers?on_conflict=owner_id,local_id&select=id,local_id", {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+          body: JSON.stringify(row)
+        });
+        remote = Array.isArray(saved) ? saved[0] : null;
+      } else {
+        const found = await rest("oil_customers?select=id,local_id&owner_id=eq." + encodeURIComponent(owner) + "&local_id=eq." + encodeURIComponent(String(customer.id)));
+        remote = found && found[0];
+      }
+      if (!remote?.id) throw new Error("لم تُرجع قاعدة البيانات معرّف الزبون بعد الحفظ. أعد المحاولة، وإذا تكرر الخطأ أرسل رسالة الحالة كاملة.");
       if (!remoteIsNewer) {
         const installments = (customer.inst || []).map((item, index) => ({
           owner_id: owner, customer_id: remote.id, installment_number: index + 1,
